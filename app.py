@@ -30,7 +30,12 @@ app.config.update(
     SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production"
 )
 
-DATABASE = Path(__file__).resolve().parent / "database.db"
+DATABASE = Path(
+    os.environ.get(
+        "DATABASE_PATH",
+        str(Path(__file__).resolve().parent / "database.db")
+    )
+)
 
 
 # STEP 6: Check whether a user is logged in
