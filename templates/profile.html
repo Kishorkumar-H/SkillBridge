@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>My Profile | SkillBridge</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+    body {
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .sidebar-link {
+        display: block;
+        padding: 12px 16px;
+        border-radius: 10px;
+        color: #cbd5e1;
+        transition: 0.2s;
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link.active {
+        background: #4338ca;
+        color: white;
+    }
+
+    .profile-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .profile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(15, 23, 42, 0.06);
+    }
+</style>
+
+
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800">
+
+<div class="min-h-screen md:flex">
+
+<!-- Sidebar -->
+<aside class="w-full shrink-0 bg-slate-950 p-5 text-white md:min-h-screen md:w-64">
+
+    <div class="mb-10">
+        <a href="{{ url_for('home') }}"
+           class="text-2xl font-bold">
+            Skill<span class="text-indigo-400">Bridge</span>
+        </a>
+
+        <p class="mt-2 text-sm text-slate-400">
+            Build your skills. Shape your future.
+        </p>
+    </div>
+
+    <nav class="space-y-2">
+
+        <a href="{{ url_for('dashboard') }}"
+           class="sidebar-link">
+            🏠 Dashboard
+        </a>
+
+        <a href="{{ url_for('career_selection') }}"
+           class="sidebar-link">
+            🎯 Career Selection
+        </a>
+
+        <a href="{{ url_for('skill_assessment') }}"
+           class="sidebar-link">
+            📊 Skill Assessment
+        </a>
+
+        <a href="{{ url_for('assessment_history') }}"
+           class="sidebar-link">
+            📈 Assessment History
+        </a>
+
+        <a href="{{ url_for('learning_roadmap') }}"
+           class="sidebar-link">
+            🗺️ Learning Roadmap
+        </a>
+
+        <a href="{{ url_for('profile') }}"
+           class="sidebar-link active"
+           aria-current="page">
+            👤 My Profile
+        </a>
+
+    </nav>
+
+    <div class="mt-10 border-t border-slate-700 pt-5">
+
+        <p class="mb-4 text-xs text-slate-400">
+            YOUR FUTURE STARTS HERE
+        </p>
+
+        <a href="{{ url_for('logout') }}"
+           class="block rounded-lg px-4 py-3 text-red-300 transition hover:bg-red-900 hover:text-white">
+            🚪 Logout
+        </a>
+
+    </div>
+
+</aside>
+
+<!-- Main Content -->
+<main class="min-w-0 flex-1">
+
+    <!-- Top Bar -->
+    <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5">
+
+        <div>
+            <h1 class="text-xl font-bold">
+                My Profile
+            </h1>
+
+            <p class="mt-1 text-sm text-slate-500">
+                Manage your account and career information.
+            </p>
+        </div>
+
+        <a href="{{ url_for('dashboard') }}"
+           class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            ← Back to Dashboard
+        </a>
+
+    </header>
+
+    <div class="mx-auto max-w-6xl p-5 md:p-8">
+
+        <!-- Profile Header -->
+        <section class="mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 p-6 text-white shadow-lg shadow-indigo-200/40 md:p-9">
+
+            <div class="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+
+                <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-3xl font-bold">
+                    {{ user["full_name"][0]|upper }}
+                </div>
+
+                <div>
+                    <p class="mb-2 text-sm font-medium tracking-wider text-indigo-100">
+                        SKILLBRIDGE MEMBER
+                    </p>
+
+                    <h2 class="text-3xl font-bold md:text-4xl">
+                        {{ user["full_name"] }}
+                    </h2>
+
+                    <p class="mt-2 text-sm leading-6 text-indigo-100">
+                        Keep learning, strengthen your skills, and move closer to your career goals.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Account Information -->
+        <section class="mb-8">
+
+            <div class="mb-5">
+                <h2 class="text-xl font-bold">
+                    Account Information
+                </h2>
+
+                <p class="mt-1 text-sm text-slate-500">
+                    Your registered SkillBridge account details.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+                <!-- Full Name -->
+                <article class="profile-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-2xl">
+                        👤
+                    </div>
+
+                    <p class="text-sm font-medium text-slate-500">
+                        Full Name
+                    </p>
+
+                    <p class="mt-2 break-words text-lg font-bold text-slate-800">
+                        {{ user["full_name"] }}
+                    </p>
+
+                </article>
+
+                <!-- Email -->
+                <article class="profile-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-2xl">
+                        📧
+                    </div>
+
+                    <p class="text-sm font-medium text-slate-500">
+                        Registered Email
+                    </p>
+
+                    <p class="mt-2 break-words text-lg font-bold text-slate-800">
+                        {{ user["email"] }}
+                    </p>
+
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- Career Information -->
+        <section class="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+
+            <div class="mb-6">
+                <h2 class="text-xl font-bold">
+                    🎯 Career Information
+                </h2>
+
+                <p class="mt-1 text-sm text-slate-500">
+                    Review your current career selection and update it when needed.
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-5 md:p-6">
+
+                <p class="text-sm font-medium text-indigo-600">
+                    Your Selected Career
+                </p>
+
+                <h3 class="mt-2 text-xl font-bold text-slate-800">
+                    {{ user["selected_career"] or "Not selected yet" }}
+                </h3>
+
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Your selected career helps you focus your skill assessments and learning roadmap.
+                </p>
+
+            </div>
+
+            <div class="mt-5">
+
+                <a href="{{ url_for('career_selection') }}"
+                   class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+
+                    {% if user["selected_career"] %}
+                        Change My Career →
+                    {% else %}
+                        Choose My Career →
+                    {% endif %}
+
+                </a>
+
+            </div>
+
+        </section>
+
+        <!-- Account Details -->
+        <section class="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+            <h2 class="mb-5 text-xl font-bold">
+                Account Details
+            </h2>
+
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <div>
+                    <p class="text-sm text-slate-500">
+                        Account Status
+                    </p>
+
+                    <p class="mt-1 font-semibold text-slate-800">
+                        Active Member
+                    </p>
+                </div>
+
+                <span class="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Account Available
+                </span>
+
+            </div>
+
+            {% if user["created_at"] %}
+            <div class="mt-5 border-t border-slate-100 pt-5">
+
+                <p class="text-sm text-slate-500">
+                    Member Since
+                </p>
+
+                <p class="mt-1 font-semibold text-slate-800">
+                    {{ user["created_at"] }}
+                </p>
+
+            </div>
+            {% endif %}
+
+        </section>
+
+        <!-- Bottom Action -->
+        <section class="mb-8 rounded-2xl border border-indigo-100 bg-indigo-50 p-6 md:flex md:items-center md:justify-between">
+
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">
+                    Continue Your Learning Journey
+                </h2>
+
+                <p class="mt-2 text-sm leading-6 text-slate-600">
+                    Check your performance, assess your skills, and explore your learning roadmap.
+                </p>
+            </div>
+
+            <a href="{{ url_for('dashboard') }}"
+               class="mt-5 inline-flex shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white transition hover:bg-indigo-700 md:ml-6 md:mt-0">
+                Go to Dashboard →
+            </a>
+
+        </section>
+
+        <!-- Footer -->
+        <footer class="border-t border-slate-200 bg-white px-2 py-5">
+
+            <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+
+                <p class="text-center text-sm text-slate-500">
+                    © 2026 SkillBridge · Learn Today, Grow Tomorrow.
+                </p>
+
+                <a href="{{ url_for('home') }}"
+                   class="inline-flex items-center gap-2 text-xl font-bold text-slate-900 transition hover:opacity-80"
+                   aria-label="SkillBridge home">
+
+                    <span>
+                        Skill<span class="text-indigo-600">Bridge</span>
+                    </span>
+
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white">
+                        SB
+                    </span>
+
+                </a>
+
+            </div>
+
+        </footer>
+
+    </div>
+
+</main>
+</div>
+
+</body>
+</html>

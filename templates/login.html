@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login | SkillBridge</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        }
+
+        .login-card {
+            animation: appear 0.5s ease-out;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-input {
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-100 flex items-center justify-center p-4">
+
+    <main class="login-card w-full max-w-md">
+
+        <!-- Brand -->
+        <div class="text-center mb-7">
+
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white text-3xl font-bold shadow-lg shadow-indigo-200 mb-4">
+                S
+            </div>
+
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">
+                Skill<span class="text-indigo-600">Bridge</span>
+            </h1>
+
+            <p class="text-sm text-slate-500 mt-2">
+                Build your skills. Shape your future.
+            </p>
+
+        </div>
+
+        <!-- Login Card -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 p-6 sm:p-8">
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">
+                    Welcome back!
+                </h2>
+
+                <p class="text-sm text-slate-500 mt-2">
+                    Sign in to continue your learning journey.
+                </p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div
+                            role="alert"
+                            aria-live="polite"
+                            class="mb-5 rounded-xl border p-3 text-sm font-medium
+                            {% if category == 'success' %}
+                                border-green-200 bg-green-50 text-green-800
+                            {% else %}
+                                border-red-200 bg-red-50 text-red-800
+                            {% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Login Form -->
+            <form action="{{ url_for('login') }}"
+                  method="post"
+                  class="space-y-5">
+
+                <!-- Email -->
+                <div>
+                    <label for="email"
+                           class="block text-sm font-semibold text-slate-700 mb-2">
+                        Email address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        autocomplete="email"
+                        placeholder="you@example.com"
+                        class="form-input w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400"
+                    >
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password"
+                           class="block text-sm font-semibold text-slate-700 mb-2">
+                        Password
+                    </label>
+
+                    <div class="relative">
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="Enter your password"
+                            class="form-input w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 pr-14 text-slate-900 placeholder-slate-400"
+                        >
+
+                        <!-- Show / Hide Password Button -->
+                        <button
+                            type="button"
+                            id="togglePassword"
+                            aria-label="Show password"
+                            aria-controls="password"
+                            aria-pressed="false"
+                            class="absolute inset-y-0 right-3 flex items-center justify-center rounded-lg px-2 text-slate-500 transition hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        >
+
+                            <!-- Eye Icon -->
+                            <svg
+                                id="eyeIcon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+
+                            <!-- Hidden Eye-Off Icon -->
+                            <svg
+                                id="eyeOffIcon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                                class="hidden"
+                            >
+                                <path d="M3 3l18 18"></path>
+                                <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path>
+                                <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a15.5 15.5 0 0 1-4 4.8"></path>
+                                <path d="M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10.5 10.5 0 0 0 4-.8"></path>
+                            </svg>
+
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    class="w-full rounded-xl bg-indigo-600 px-4 py-3.5 font-semibold text-white shadow-md shadow-indigo-200 transition duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-indigo-200 active:scale-[0.99]"
+                >
+
+                    Sign In
+                    <span aria-hidden="true" class="ml-1">→</span>
+
+                </button>
+
+            </form>
+
+            <!-- Registration Link -->
+            <div class="mt-6 border-t border-slate-100 pt-5 text-center">
+
+                <p class="text-sm text-slate-600">
+                    New to SkillBridge?
+
+                    <a href="{{ url_for('register') }}"
+                       class="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline">
+                        Create an account
+                    </a>
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-6">
+
+            <a href="{{ url_for('home') }}"
+               class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-indigo-600">
+
+                <span aria-hidden="true">←</span>
+                Back to Home
+
+            </a>
+
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-xs text-slate-400 mt-8">
+            © 2026 SkillBridge. Your journey starts here.
+        </p>
+
+    </main>
+
+    <!-- Password Visibility Script -->
+    <script>
+        const passwordInput = document.getElementById("password");
+        const togglePasswordButton = document.getElementById("togglePassword");
+        const eyeIcon = document.getElementById("eyeIcon");
+        const eyeOffIcon = document.getElementById("eyeOffIcon");
+
+        togglePasswordButton.addEventListener("click", function () {
+
+            const isPasswordHidden = passwordInput.type === "password";
+
+            passwordInput.type = isPasswordHidden ? "text" : "password";
+
+            eyeIcon.classList.toggle("hidden", isPasswordHidden);
+            eyeOffIcon.classList.toggle("hidden", !isPasswordHidden);
+
+            togglePasswordButton.setAttribute(
+                "aria-label",
+                isPasswordHidden ? "Hide password" : "Show password"
+            );
+
+            togglePasswordButton.setAttribute(
+                "aria-pressed",
+                String(isPasswordHidden)
+            );
+        });
+    </script>
+
+</body>
+</html>

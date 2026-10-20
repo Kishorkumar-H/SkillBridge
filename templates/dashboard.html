@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SkillBridge | Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: #cbd5e1;
+            transition: 0.2s;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: #4338ca;
+            color: white;
+        }
+
+        .feature-card,
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover,
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(15, 23, 42, 0.08);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+<div class="min-h-screen md:flex">
+
+    <!-- Sidebar -->
+    <aside class="bg-slate-950 text-white p-5 w-full md:w-64 md:min-h-screen md:shrink-0">
+        
+        <div class="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-lg font-extrabold shadow-lg"> 
+            SB 
+        </div>
+
+        <div class="mb-10">
+            <h1 class="text-2xl font-bold">
+                Skill<span class="text-indigo-400">Bridge</span>
+            </h1>
+
+            <p class="text-slate-400 text-sm mt-2">
+                Build your skills. Shape your future.
+            </p>
+        </div>
+
+        <nav class="space-y-2">
+
+            <a href="{{ url_for('dashboard') }}"
+               class="sidebar-link active">
+                🏠 Dashboard
+            </a>
+
+            <a href="{{ url_for('career_selection') }}"
+               class="sidebar-link">
+                🎯 Career Selection
+            </a>
+
+            <a href="{{ url_for('skill_assessment') }}"
+               class="sidebar-link">
+                📊 Skill Assessment
+            </a>
+
+            <a href="{{ url_for('assessment_history') }}"
+               class="sidebar-link">
+                📈 Assessment History
+            </a>
+
+            <a href="{{ url_for('learning_roadmap') }}"
+                class="sidebar-link">
+                💹Explore Learning Roadmap
+             </a>
+
+            <a href="{{ url_for('profile') }}" class="sidebar-link">
+                👤 My Profile
+            </a>
+
+        </nav>
+
+        <div class="mt-10 border-t border-slate-700 pt-5">
+
+            <p class="text-xs text-slate-400 mb-4">
+                YOUR FUTURE STARTS HERE
+            </p>
+
+            <a href="{{ url_for('logout') }}"
+               class="block px-4 py-3 rounded-lg text-red-300
+                      hover:bg-red-900 hover:text-white transition">
+                🚪 Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0 min-h-screen">
+
+        <!-- Top Bar -->
+        <header class="bg-white border-b border-slate-200 px-6 py-5
+                       flex flex-wrap items-center justify-between gap-4">
+
+            <div>
+                <h2 class="text-xl font-semibold">Student Dashboard</h2>
+                <p class="text-sm text-slate-500">
+                    Your personal career development space
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+
+                <div class="text-right">
+                    <p class="font-semibold text-sm">
+                        {{ user["full_name"] }}
+                    </p>
+
+                    <p class="text-xs text-slate-500">
+                        SkillBridge Member
+                    </p>
+                </div>
+
+                <div class="h-11 w-11 rounded-full bg-indigo-100 text-indigo-700
+                            flex items-center justify-center font-bold text-lg shrink-0">
+                    {{ user["full_name"][0]|upper }}
+                </div>
+
+            </div>
+
+        </header>
+
+        <div class="p-5 md:p-8">
+
+            <!-- Welcome Banner -->
+            <section class="rounded-2xl bg-gradient-to-r from-indigo-600
+                via-indigo-700 to-violet-700 text-white
+                p-7 md:p-10 mb-8 shadow-lg shadow-indigo-200/50">
+
+                <p class="text-indigo-100 mb-2">
+                    WELCOME TO SKILLBRIDGE
+                </p>
+
+                <h2 class="text-3xl md:text-4xl font-bold mb-3">
+                    Build skills. Bridge the gap.
+                </h2>
+
+                <p class="text-indigo-100 max-w-2xl mb-6">
+                    Discover your career path, understand your skill gaps,
+                    and create a learning roadmap to achieve your goals.
+                </p>
+
+                <a href="{{ url_for('career_selection') }}"
+                   class="inline-block bg-white text-indigo-700 font-semibold
+                          px-6 py-3 rounded-lg hover:bg-indigo-50">
+                    Explore Careers →
+                </a>
+
+            </section>
+
+            <!-- Analytics -->
+            <section class="mb-10">
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+
+                    <div>
+                        <h3 class="text-xl font-bold">
+                            Your Performance
+                        </h3>
+
+                        <p class="text-sm text-slate-500 mt-1">
+                            Track your assessment progress and achievements.
+                        </p>
+                    </div>
+
+                    <a href="{{ url_for('assessment_history') }}"
+                       class="text-sm font-semibold text-blue-700 hover:underline">
+                        View All History →
+                    </a>
+
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+
+                    <!-- Total Assessments -->
+                    <article class="stat-card bg-white rounded-2xl p-6
+                                    border border-slate-200 shadow-sm">
+
+                        <div class="flex items-center justify-between">
+
+                            <div>
+                                <p class="text-sm text-slate-500">
+                                    Total Assessments
+                                </p>
+
+                                <h4 class="text-3xl font-bold mt-2 text-slate-800">
+                                    {{ analytics["total_assessments"] }}
+                                </h4>
+                            </div>
+
+                            <div class="text-3xl bg-blue-50 rounded-xl p-3">
+                                📊
+                            </div>
+
+                        </div>
+
+                        <p class="text-xs text-slate-500 mt-4">
+                            Assessments completed
+                        </p>
+
+                    </article>
+
+                    <!-- Average Score -->
+                    <article class="stat-card bg-white rounded-xl p-6
+                                    border border-slate-200">
+
+                        <div class="flex items-center justify-between">
+
+                            <div>
+                                <p class="text-sm text-slate-500">
+                                    Average Score
+                                </p>
+
+                                <h4 class="text-3xl font-bold mt-2 text-indigo-600">
+                                    {{ "%.1f"|format(analytics["average_score"]) }}%
+                                </h4>
+                            </div>
+
+                            <div class="text-3xl bg-indigo-50 rounded-xl p-3">
+                                🎯
+                            </div>
+
+                        </div>
+
+                        <p class="text-xs text-slate-500 mt-4">
+                            Average across your assessments
+                        </p>
+
+                    </article>
+
+                    <!-- Best Score -->
+                    <article class="stat-card bg-white rounded-xl p-6
+                                    border border-slate-200">
+
+                        <div class="flex items-center justify-between">
+
+                            <div>
+                                <p class="text-sm text-slate-500">
+                                    Best Score
+                                </p>
+
+                                <h4 class="text-3xl font-bold mt-2 text-emerald-600">
+                                    {{ "%.1f"|format(analytics["best_score"]) }}%
+                                </h4>
+                            </div>
+
+                            <div class="text-3xl bg-emerald-50 rounded-xl p-3">
+                                🏆
+                            </div>
+
+                        </div>
+
+                        <p class="text-xs text-slate-500 mt-4">
+                            Your highest assessment score
+                        </p>
+
+                    </article>
+
+                </div>
+
+            </section>
+
+            <!-- Progress Chart -->
+            <section class="bg-white rounded-2xl border border-slate-200
+                            p-5 md:p-7 mb-10">
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold">
+                        📈 Assessment Progress
+                    </h3>
+
+                    <p class="text-sm text-slate-500 mt-1">
+                        See how your assessment scores change over time.
+                    </p>
+                </div>
+
+                {% if progress_data %}
+
+                    <div class="relative w-full" style="height: 320px;">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+
+                {% else %}
+
+                    <div class="text-center py-12 bg-slate-50 rounded-xl">
+                        <div class="text-4xl mb-3">📈</div>
+
+                        <h4 class="font-bold text-slate-700">
+                            Your progress chart will appear here
+                        </h4>
+
+                        <p class="text-sm text-slate-500 mt-2 mb-5">
+                            Complete an assessment to start tracking your progress.
+                        </p>
+
+                        <a href="{{ url_for('skill_assessment') }}"
+                           class="inline-block bg-indigo-600 text-white
+                                  px-5 py-3 rounded-lg font-semibold
+                                  hover:bg-indigo-800">
+                            Start Assessment →
+                        </a>
+                    </div>
+
+                {% endif %}
+
+            </section>
+
+            <!-- Recent Assessments -->
+            <section class="bg-white rounded-2xl border border-slate-200
+                            p-5 md:p-7 mb-10">
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+
+                    <div>
+                        <h3 class="text-xl font-bold">
+                            🕒 Recent Assessments
+                        </h3>
+
+                        <p class="text-sm text-slate-500 mt-1">
+                            Your five latest assessment results.
+                        </p>
+                    </div>
+
+                    <a href="{{ url_for('assessment_history') }}"
+                       class="text-sm font-semibold text-indigo-600 hover:underline">
+                        View All →
+                    </a>
+
+                </div>
+
+                {% if recent_assessments %}
+
+                    <div class="overflow-x-auto">
+
+                        <table class="w-full text-left">
+
+                            <thead class="bg-slate-50 border-b border-slate-200">
+
+                                <tr>
+                                    <th class="px-4 py-3 text-sm font-semibold text-slate-600">
+                                        Career
+                                    </th>
+
+                                    <th class="px-4 py-3 text-sm font-semibold text-slate-600">
+                                        Score
+                                    </th>
+
+                                    <th class="px-4 py-3 text-sm font-semibold text-slate-600">
+                                        Percentage
+                                    </th>
+
+                                    <th class="px-4 py-3 text-sm font-semibold text-slate-600">
+                                        Level
+                                    </th>
+
+                                    <th class="px-4 py-3 text-sm font-semibold text-slate-600">
+                                        Date
+                                    </th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody class="divide-y divide-slate-100">
+
+                                {% for item in recent_assessments %}
+
+                                    <tr class="hover:bg-slate-50">
+
+                                        <td class="px-4 py-4 font-medium text-slate-800">
+                                            {{ item["career"] }}
+                                        </td>
+
+                                        <td class="px-4 py-4 text-slate-600">
+                                            {{ item["correct_answers"] }}/{{ item["total_questions"] }}
+                                        </td>
+
+                                        <td class="px-4 py-4 font-semibold text-indigo-600">
+                                            {{ "%.1f"|format(item["percentage"]) }}%
+                                        </td>
+
+                                        <td class="px-4 py-4">
+
+                                            {% if item["skill_level"] == "Beginner" %}
+
+                                                <span class="px-3 py-1 rounded-full text-xs
+                                                             font-semibold bg-amber-100 text-amber-700">
+                                                    Beginner
+                                                </span>
+
+                                            {% elif item["skill_level"] == "Intermediate" %}
+
+                                                <span class="px-3 py-1 rounded-full text-xs
+                                                             font-semibold bg-blue-100 text-blue-700">
+                                                    Intermediate
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="px-3 py-1 rounded-full text-xs
+                                                             font-semibold bg-emerald-100 text-emerald-700">
+                                                    Advanced
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+                                        <td class="px-4 py-4 text-sm text-slate-500">
+                                            {{ item["created_at"] }}
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="text-center py-10 bg-slate-50 rounded-xl">
+
+                        <div class="text-4xl mb-3">📝</div>
+
+                        <h4 class="font-bold text-slate-700">
+                            No assessments completed yet
+                        </h4>
+
+                        <p class="text-sm text-slate-500 mt-2 mb-5">
+                            Take your first assessment to see your results here.
+                        </p>
+
+                        <a href="{{ url_for('skill_assessment') }}"
+                           class="inline-block bg-indigo-600 text-white
+                                  px-5 py-3 rounded-lg font-semibold
+                                  hover:bg-blue-800">
+                            Start Assessment →
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            </section>
+
+            <!-- Learning Workspace -->
+            <section class="mb-10">
+
+                <h3 class="text-xl font-bold mb-5">
+                    Your Learning Workspace
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+                    <!-- Career -->
+                    <article class="feature-card bg-white rounded-2xl
+                                    p-6 border border-slate-200 shadow-sm">
+
+                        <div class="text-3xl mb-4">🎯</div>
+
+                        <h4 class="text-lg font-bold mb-2">
+                            Career Selection
+                        </h4>
+
+                        <p class="text-slate-500 text-sm leading-6 mb-5">
+                            Choose the career that matches your interests
+                            and future ambitions.
+                        </p>
+
+                        <a href="{{ url_for('career_selection') }}"
+                                  class="inline-block bg-indigo-600 text-white
+                                  px-5 py-3 rounded-lg font-semibold
+                                  hover:bg-blue-800">
+                            
+                            Choose a career →
+                        </a>
+
+                    </article>
+
+                    <!-- Assessment -->
+                    <article id="assessment"
+                             class="feature-card bg-white rounded-xl
+                                    p-6 border border-slate-200">
+
+                        <div class="text-3xl mb-4">📊</div>
+
+                        <h4 class="text-lg font-bold mb-2">
+                            Skill Assessment
+                        </h4>
+
+                        <p class="text-slate-500 text-sm leading-6 mb-5">
+                            Evaluate your knowledge, discover your strengths,
+                            and identify skills to improve.
+                        </p>
+
+                        <a href="{{ url_for('skill_assessment') }}"
+                           class="inline-block bg-indigo-600 text-white
+                                  px-5 py-3 rounded-lg font-semibold
+                                  hover:bg-blue-800">
+                            Start Assessment →
+                        </a>
+
+                    </article>
+
+                    <!-- Learning Roadmap -->
+
+                    <article id="roadmap"
+                        class="feature-card bg-white rounded-xl
+                        p-6 border border-slate-200">
+
+                        <div class="text-3xl mb-4">🗺️</div>
+
+                            <h4 class="text-lg font-bold mb-2 text-slate-800">
+                                Learning Roadmap
+                            </h4>
+
+                            <p class="text-slate-500 text-sm leading-6 mb-5">
+                                Follow a structured learning plan designed for
+                                your chosen career and build your skills step by step.
+                            </p>
+
+                            <a href="{{ url_for('learning_roadmap') }}"
+                                class="inline-flex items-center justify-center gap-2
+                                bg-indigo-600 hover:bg-indigo-700
+                                text-white text-sm font-semibold
+                                px-4 py-2.5 rounded-lg
+                                transition duration-200">
+                            Explore Roadmap
+                            <span aria-hidden="true">→</span>
+                            </a>
+
+                    </article>
+
+
+                </div>
+
+            </section>
+
+            <!-- Latest Assessment API Card -->
+
+            <section class="mx-auto my-6 max-w-7xl px-5 sm:px-8">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+    <h2 class="text-xl font-bold text-slate-900">
+        Latest Assessment
+    </h2>
+
+    <p class="mt-1 text-sm text-slate-500">
+        Your latest assessment details, loaded using the Fetch API.
+    </p>
+
+    <div id="apiLoading" class="mt-5 text-sm text-slate-500" role="status" aria-live="polite">
+        Loading your assessment...
+    </div>
+
+    <div id="apiError" class="mt-5 hidden rounded-xl bg-red-50 p-4 text-sm text-red-700" role="alert"></div>
+
+    <div id="apiAssessment" class="mt-5 hidden grid-cols-1 gap-4 sm:grid-cols-3">
+
+        <div class="rounded-xl bg-indigo-50 p-4">
+            <p class="text-sm text-indigo-600">Selected Career</p>
+            <p id="apiCareer" class="mt-2 font-bold text-slate-900"></p>
+        </div>
+
+        <div class="rounded-xl bg-emerald-50 p-4">
+            <p class="text-sm text-emerald-600">Assessment Score</p>
+            <p id="apiPercentage" class="mt-2 font-bold text-slate-900"></p>
+        </div>
+
+        <div class="rounded-xl bg-amber-50 p-4">
+            <p class="text-sm text-amber-600">Skill Level</p>
+            <p id="apiSkillLevel" class="mt-2 font-bold text-slate-900"></p>
+        </div>
+
+    </div>
+
+    <div id="apiEmpty" class="mt-5 hidden text-sm text-slate-500"></div>
+
+    <button id="apiRetry" type="button"
+            class="mt-4 hidden rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+        Try Again
+    </button>
+
+</div>
+
+</section>
+
+            <!-- Footer -->
+
+<footer class="mt-8 border-t border-slate-200 bg-white px-5 py-5 md:px-8">
+    <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+
+    <!-- Copyright -->
+    <p class="text-center text-sm text-slate-500">
+        © 2026 SkillBridge · Learn Today, Grow Tomorrow.
+    </p>
+
+    <!-- SkillBridge Logo -->
+    <a href="{{ url_for('home') }}"
+       class="inline-flex items-center gap-2 rounded-lg font-bold text-xl text-slate-900 transition hover:opacity-80"
+       aria-label="SkillBridge home">
+
+        <span>Skill<span class="text-indigo-600">Bridge</span></span>
+
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm text-white shadow-sm">
+            SB
+        </span>
+
+    </a>
+
+</div>
+
+
+</footer>
+
+
+        </div>
+
+    </main>
+
+</div>
+
+
+
+
+<script>
+    async function loadLatestAssessment() {
+        const loading = document.getElementById("apiLoading");
+        const error = document.getElementById("apiError");
+        const assessmentCard = document.getElementById("apiAssessment");
+        const empty = document.getElementById("apiEmpty");
+        const retry = document.getElementById("apiRetry");
+
+        loading.classList.remove("hidden");
+        error.classList.add("hidden");
+        assessmentCard.classList.add("hidden");
+        assessmentCard.classList.remove("grid");
+        empty.classList.add("hidden");
+        retry.classList.add("hidden");
+
+        try {
+            const response = await fetch("/api/latest-assessment", {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    response.status === 401 || response.status === 403
+                        ? "Please log in again to view your assessment."
+                        : "Unable to load your assessment. Please try again."
+                );
+            }
+
+            const data = await response.json();
+            loading.classList.add("hidden");
+
+            if (!data.success) {
+                throw new Error("The server returned an unsuccessful response.");
+            }
+
+            if (!data.assessment) {
+                empty.textContent = data.message || "No assessment completed yet.";
+                empty.classList.remove("hidden");
+                return;
+            }
+
+            document.getElementById("apiCareer").textContent =
+                data.assessment.career || "Not available";
+
+            document.getElementById("apiPercentage").textContent =
+                `${data.assessment.percentage}%`;
+
+            document.getElementById("apiSkillLevel").textContent =
+                data.assessment.skill_level || "Not available";
+
+            assessmentCard.classList.remove("hidden");
+            assessmentCard.classList.add("grid");
+
+        } catch (err) {
+            loading.classList.add("hidden");
+            error.textContent =
+                err.message || "A network error occurred. Please try again.";
+            error.classList.remove("hidden");
+            retry.classList.remove("hidden");
+        }
+    }
+
+    document.getElementById("apiRetry").addEventListener(
+        "click",
+        loadLatestAssessment
+    );
+
+    loadLatestAssessment();
+</script>
+
+
+<!-- Chart.js Progress Chart -->
+{% if progress_data %}
+<script id="progress-data" type="application/json">
+{
+    "labels": {{ progress_data | map(attribute='created_at') | list | tojson }},
+    "scores": {{ progress_data | map(attribute='percentage') | list | tojson }}
+}
+</script>
+
+<script>
+    const chartData = JSON.parse(
+    document.getElementById("progress-data").textContent
+    );
+
+    const assessmentLabels = chartData.labels;
+    const assessmentScores = chartData.scores;
+
+    const chartCanvas = document.getElementById("progressChart");
+
+    if (chartCanvas && typeof Chart !== "undefined") {
+        new Chart(chartCanvas, {
+            type: "line",
+
+            data: {
+                labels: assessmentLabels,
+
+                datasets: [{
+                    label: "Assessment Score (%)",
+                    data: assessmentScores,
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: "Score (%)"
+                        }
+                    },
+
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Assessment Date"
+                        }
+                    }
+                },
+
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: "top"
+                    },
+
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return "Score: " + context.parsed.y + "%";
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+{% endif %}
+
+
+</body>
+</html>

@@ -1,0 +1,1103 @@
+import sqlite3
+from pathlib import Path
+
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    session,
+    jsonify
+)
+
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
+
+import re
+import os
+
+app = Flask(__name__)
+
+# Development secret only.
+# Replace this with an environment variable before deployment.
+app.secret_key = os.environ.get("SECRET_KEY")
+
+DATABASE = Path(__file__).resolve().parent / "database.db"
+print("SKILLBRIDGE DATABASE:", DATABASE)
+
+# STEP 6: Check whether a user is logged in
+def login_required(view_function):
+    from functools import wraps
+
+    @wraps(view_function)
+    def wrapped_view(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please log in to access this page.", "error")
+            return redirect(url_for("login"))
+
+        return view_function(*args, **kwargs)
+
+    return wrapped_view
+
+# STEP 1: Connect to SQLite database
+def get_db_connection():
+    connection = sqlite3.connect(DATABASE)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+# STEP 2: Create the users table
+def init_db():
+    connection = get_db_connection()
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Add career selection to existing users table
+    columns = connection.execute(
+        "PRAGMA table_info(users)"
+    ).fetchall()
+
+    column_names = [column["name"] for column in columns]
+
+    if "selected_career" not in column_names:
+        connection.execute(
+            "ALTER TABLE users ADD COLUMN selected_career TEXT"
+        )
+
+    # Store assessment attempts and results
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS assessments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            career TEXT NOT NULL,
+            total_questions INTEGER NOT NULL,
+            correct_answers INTEGER NOT NULL,
+            percentage REAL NOT NULL,
+            skill_level TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
+    # Store skill-wise assessment results
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS assessment_skills (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            assessment_id INTEGER NOT NULL,
+            skill_name TEXT NOT NULL,
+            total_questions INTEGER NOT NULL,
+            correct_answers INTEGER NOT NULL,
+            percentage REAL NOT NULL,
+            FOREIGN KEY (assessment_id)
+                REFERENCES assessments(id)
+                ON DELETE CASCADE
+        )
+    """)
+
+    connection.commit()
+    connection.close()
+
+
+# STEP 3: Homepage
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+# STEP 4: Registration
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+
+        full_name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        # Validate the submitted form
+        if not full_name or not email or not password:
+            flash("Please fill in all required fields.", "error")
+            return redirect(url_for("register"))
+
+        if len(full_name) > 100 or len(email) > 254:
+            flash("Please check your name and email length.", "error")
+            return redirect(url_for("register"))
+
+        # Password validation
+        if len(password) < 8:
+            flash("Password must contain at least 8 characters.", "error")
+            return redirect(url_for("register"))
+
+        if not re.search(r"[A-Z]", password):
+            flash("Password must contain at least one uppercase letter (A-Z).", "error")
+            return redirect(url_for("register"))
+
+        if not re.search(r"[a-z]", password):
+            flash("Password must contain at least one lowercase letter (a-z).", "error")
+            return redirect(url_for("register"))
+
+        if not re.search(r"[0-9]", password):
+            flash("Password must contain at least one number (0-9).", "error")
+            return redirect(url_for("register"))
+
+        if not re.search(r"[^A-Za-z0-9\s]", password):
+            flash("Password must contain at least one special character, such as @ or #.", "error")
+            return redirect(url_for("register"))
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return redirect(url_for("register"))
+
+        # Hash the password before storing it
+        password_hash = generate_password_hash(password)
+
+        connection = get_db_connection()
+
+        try:
+            connection.execute(
+                """
+                INSERT INTO users (full_name, email, password_hash)
+                VALUES (?, ?, ?)
+                """,
+                (full_name, email, password_hash)
+            )
+
+            connection.commit()
+
+        except sqlite3.IntegrityError:
+            flash("This email is already registered. Please log in.", "error")
+            return redirect(url_for("register"))
+
+        finally:
+            connection.close()
+
+        flash("Account created successfully! Please log in.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+
+# STEP 5: Login page placeholder
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        if not email or not password:
+            flash("Please enter your email and password.", "error")
+            return redirect(url_for("login"))
+
+        connection = get_db_connection()
+
+        user = connection.execute(
+            "SELECT * FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+
+        connection.close()
+
+        if user and check_password_hash(
+                user["password_hash"], password
+        ):
+                session.clear()
+
+                session["user_id"] = user["id"]
+                session["user_name"] = user["full_name"]
+                session["user_email"] = user["email"]
+
+                flash("Login successful! Welcome to SkillBridge.", "success")
+                return redirect(url_for("dashboard"))
+
+        flash("Invalid email or password.", "error")
+        return redirect(url_for("login"))
+
+    return render_template("login.html")
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    connection = get_db_connection()
+
+    try:
+        # Get logged-in user's information
+        user = connection.execute(
+            """
+            SELECT full_name, email, selected_career
+            FROM users
+            WHERE id = ?
+            """,
+            (session["user_id"],)
+        ).fetchone()
+
+        # Get assessment analytics
+        analytics = connection.execute(
+            """
+            SELECT
+                COUNT(*) AS total_assessments,
+                COALESCE(ROUND(AVG(percentage), 1), 0)
+                    AS average_score,
+                COALESCE(MAX(percentage), 0)
+                    AS best_score
+            FROM assessments
+            WHERE user_id = ?
+            """,
+            (session["user_id"],)
+        ).fetchone()
+
+        # Get the five most recent assessments
+        recent_assessments = connection.execute(
+            """
+            SELECT
+                id,
+                career,
+                total_questions,
+                correct_answers,
+                percentage,
+                skill_level,
+                created_at
+            FROM assessments
+            WHERE user_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT 5
+            """,
+            (session["user_id"],)
+        ).fetchall()
+
+        # Get assessment scores for the progress chart
+        progress_data = connection.execute(
+            """
+            SELECT
+                created_at,
+                percentage
+            FROM assessments
+            WHERE user_id = ?
+            ORDER BY created_at ASC, id ASC
+            """,
+            (session["user_id"],)
+        ).fetchall()
+
+    finally:
+        connection.close()
+
+    return render_template(
+        "dashboard.html",
+        user=user,
+        analytics=analytics,
+        recent_assessments=recent_assessments,
+        progress_data=progress_data
+    )
+
+@app.route("/profile")
+@login_required
+def profile():
+    connection = get_db_connection()
+
+    try:
+        user = connection.execute(
+            """
+            SELECT full_name, email, selected_career, created_at
+            FROM users
+            WHERE id = ?
+            """,
+            (session["user_id"],)
+        ).fetchone()
+    finally:
+        connection.close()
+
+    if user is None:
+        session.clear()
+        flash("Please log in to view your profile.", "error")
+        return redirect(url_for("login"))
+
+    return render_template("profile.html", user=user)
+
+
+@app.route("/assessment-history")
+def assessment_history():
+    if "user_id" not in session:
+        flash("Please log in to view your assessment history.", "error")
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+
+    try:
+        history = connection.execute(
+            """
+            SELECT
+                id,
+                career,
+                total_questions,
+                correct_answers,
+                percentage,
+                skill_level,
+                created_at
+            FROM assessments
+            WHERE user_id = ?
+            ORDER BY created_at DESC, id DESC
+            """,
+            (session["user_id"],)
+        ).fetchall()
+
+    finally:
+        connection.close()
+
+    return render_template(
+        "assessment_history.html",
+        history=history
+    )
+
+# API: Get the logged-in user's latest assessment
+@app.route("/api/latest-assessment", methods=["GET"])
+@login_required
+def api_latest_assessment():
+    connection = get_db_connection()
+
+    try:
+        assessment = connection.execute(
+            """
+            SELECT career, percentage, skill_level, created_at
+            FROM assessments
+            WHERE user_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+            """,
+            (session["user_id"],)
+        ).fetchone()
+
+        if not assessment:
+            return jsonify({
+                "success": True,
+                "assessment": None,
+                "message": "No assessment completed yet."
+            }), 200
+
+        return jsonify({
+            "success": True,
+            "assessment": {
+                "career": assessment["career"],
+                "percentage": assessment["percentage"],
+                "skill_level": assessment["skill_level"],
+                "created_at": assessment["created_at"]
+            }
+        }), 200
+
+    finally:
+        connection.close()
+
+# Learning Roadmap
+@app.route("/learning-roadmap")
+@login_required
+def learning_roadmap():
+
+    connection = get_db_connection()
+
+    try:
+        # Get the user's selected career
+        user = connection.execute(
+            """
+            SELECT selected_career
+            FROM users
+            WHERE id = ?
+            """,
+            (session["user_id"],)
+        ).fetchone()
+
+        if not user or not user["selected_career"]:
+            flash(
+                "Please select your career to view your Learning Roadmap.",
+                "error"
+            )
+            return redirect(url_for("career_selection"))
+
+        # Get the user's latest assessment
+        assessment = connection.execute(
+            """
+            SELECT id, career, percentage, skill_level, created_at
+            FROM assessments
+            WHERE user_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+            """,
+            (session["user_id"],)
+        ).fetchone()
+
+        skill_results = []
+
+        # Get skill-wise results from the latest assessment
+        if assessment:
+            skill_results = connection.execute(
+                """
+                SELECT skill_name,
+                       total_questions,
+                       correct_answers,
+                       percentage
+                FROM assessment_skills
+                WHERE assessment_id = ?
+                ORDER BY id ASC
+                """,
+                (assessment["id"],)
+            ).fetchall()
+        print("LATEST ASSESSMENT:", dict(assessment) if assessment else None)
+        print("ROADMAP SKILL RESULTS:", [dict(skill) for skill in skill_results])
+
+    finally:
+        connection.close()
+
+    # Prepare learning recommendations
+    learning_topics = {
+        "Programming Basics": {
+            "beginner": [
+                "Learn Python variables and data types",
+                "Practise conditional statements and loops",
+                "Understand functions and basic programming"
+            ],
+            "intermediate": [
+                "Practise lists, dictionaries, and functions",
+                "Learn object-oriented programming",
+                "Build small Python projects"
+            ],
+            "advanced": [
+                "Explore advanced Python concepts",
+                "Practise algorithms and data structures",
+                "Build a complete programming project"
+            ]
+        },
+        "Web Development": {
+            "beginner": [
+                "Learn HTML structure and common tags",
+                "Understand CSS styling and layouts",
+                "Practise creating a simple webpage"
+            ],
+            "intermediate": [
+                "Practise responsive web design",
+                "Learn JavaScript DOM manipulation",
+                "Build interactive web applications"
+            ],
+            "advanced": [
+                "Explore advanced JavaScript",
+                "Learn frontend frameworks",
+                "Build a complete full-stack project"
+            ]
+        },
+        "Databases": {
+            "beginner": [
+                "Learn database tables and records",
+                "Practise basic SQL SELECT queries",
+                "Understand primary keys and foreign keys"
+            ],
+            "intermediate": [
+                "Practise SQL joins and subqueries",
+                "Learn database relationships",
+                "Practise INSERT, UPDATE, and DELETE"
+            ],
+            "advanced": [
+                "Explore database indexing",
+                "Learn query optimization",
+                "Design a database for a real project"
+            ]
+        },
+        "Networking": {
+            "beginner": [
+                "Learn the OSI and TCP/IP models",
+                "Understand IP addresses",
+                "Study basic networking devices"
+            ],
+            "intermediate": [
+                "Practise subnetting",
+                "Learn DNS, DHCP, and routing",
+                "Explore TCP and UDP"
+            ],
+            "advanced": [
+                "Study network security fundamentals",
+                "Practise network troubleshooting",
+                "Explore advanced routing concepts"
+            ]
+        },
+        "Problem Solving": {
+            "beginner": [
+                "Practise simple logical reasoning questions",
+                "Learn algorithms and flowcharts",
+                "Solve beginner programming problems"
+            ],
+            "intermediate": [
+                "Practise arrays and searching algorithms",
+                "Solve coding challenges regularly",
+                "Learn debugging techniques"
+            ],
+            "advanced": [
+                "Practise advanced algorithms",
+                "Solve data structure problems",
+                "Work on competitive programming challenges"
+            ]
+        }
+    }
+
+    print("AVAILABLE LEARNING TOPICS:", list(learning_topics.keys()))
+    print("SKILL NAMES FROM DATABASE:", [skill["skill_name"] for skill in skill_results])
+
+    roadmap = []
+
+    for skill in skill_results:
+        percentage = skill["percentage"]
+
+        if percentage < 40:
+            level = "beginner"
+        elif percentage < 80:
+            level = "intermediate"
+        else:
+            level = "advanced"
+
+        topics = learning_topics.get(
+            skill["skill_name"], {}
+        ).get(level, [])
+
+        roadmap.append({
+            "skill_name": skill["skill_name"],
+            "percentage": percentage,
+            "level": level.title(),
+            "topics": topics
+        })
+
+    print("FINAL LEARNING ROADMAP:", roadmap)
+
+    return render_template(
+        "learning_roadmap.html",
+        career=user["selected_career"],
+        assessment=assessment,
+        roadmap=roadmap
+    )
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You have logged out successfully.", "success")
+    return redirect(url_for("login"))
+
+# STEP 6: Career Selection
+@app.route("/career-selection", methods=["GET", "POST"])
+@login_required
+def career_selection():
+
+    careers = [
+        "Full Stack Developer",
+        "Python Developer",
+        "Java Developer",
+        "Frontend Developer",
+        "Cybersecurity Analyst",
+        "Data Analyst"
+    ]
+
+    if request.method == "POST":
+
+        selected_career = request.form.get(
+            "career", ""
+        ).strip()
+
+        if selected_career not in careers:
+            flash("Please select a valid career.", "error")
+            return redirect(url_for("career_selection"))
+
+        connection = get_db_connection()
+
+        try:
+            connection.execute(
+                """
+                UPDATE users
+                SET selected_career = ?
+                WHERE id = ?
+                """,
+                (selected_career, session["user_id"])
+            )
+
+            connection.commit()
+
+        finally:
+            connection.close()
+
+        flash(
+            f"Your career choice, {selected_career}, has been saved!",
+            "success"
+        )
+
+        return redirect(url_for("skill_assessment"))
+
+    connection = get_db_connection()
+
+    try:
+        user = connection.execute(
+            "SELECT selected_career FROM users WHERE id = ?",
+            (session["user_id"],)
+        ).fetchone()
+    finally:
+        connection.close()
+
+    selected_career = user["selected_career"] if user else None
+
+    return render_template(
+        "career_selection.html",
+        careers=careers,
+        selected_career=selected_career
+    )
+
+# Skill Assessment
+
+@app.route("/skill-assessment")
+@login_required
+def skill_assessment():
+
+
+    connection = get_db_connection()
+
+    try:
+        user = connection.execute(
+            """
+            SELECT selected_career
+            FROM users
+            WHERE id = ?
+            """,
+            (session["user_id"],)
+        ).fetchone()
+    finally:
+        connection.close()
+
+    if not user or not user["selected_career"]:
+        flash(
+            "Please select your career before starting the assessment.",
+            "error"
+        )
+        return redirect(url_for("career_selection"))
+
+    career = user["selected_career"]
+
+    questions = [
+    {
+        "id": 1,
+        "skill": "Programming Basics",
+        "question": "What is a variable used for?",
+        "options": [
+            "To store data",
+            "To delete a program",
+            "To turn off a computer",
+            "To create hardware"
+        ]
+    },
+    {
+        "id": 2,
+        "skill": "Programming Basics",
+        "question": "What is an algorithm?",
+        "options": [
+            "A computer monitor",
+            "A step-by-step solution to a problem",
+            "A programming language only",
+            "A storage device"
+        ]
+    },
+    {
+        "id": 3,
+        "skill": "Web Development",
+        "question": "What does HTML primarily define?",
+        "options": [
+            "Database security",
+            "Webpage structure",
+            "Computer hardware",
+            "Network cables"
+        ]
+    },
+    {
+        "id": 4,
+        "skill": "Web Development",
+        "question": "What is CSS mainly used for?",
+        "options": [
+            "Styling webpages",
+            "Storing passwords",
+            "Managing computer memory",
+            "Creating network connections"
+        ]
+    },
+    {
+        "id": 5,
+        "skill": "Programming Basics",
+        "question": "What is a loop used for?",
+        "options": [
+            "Repeating instructions",
+            "Deleting files automatically",
+            "Increasing screen brightness",
+            "Installing hardware"
+        ]
+    },
+    {
+        "id": 6,
+        "skill": "Databases",
+        "question": "What is a database used for?",
+        "options": [
+            "Playing music only",
+            "Organizing and storing data",
+            "Drawing pictures only",
+            "Cooling a computer"
+        ]
+    },
+    {
+        "id": 7,
+        "skill": "Networking",
+        "question": "What does an IP address help identify?",
+        "options": [
+            "A device on a network",
+            "A keyboard key",
+            "A file extension",
+            "A programming variable"
+        ]
+    },
+    {
+        "id": 8,
+        "skill": "Programming Basics",
+        "question": "What is a function?",
+        "options": [
+            "A reusable block of code",
+            "A computer screen",
+            "A network cable",
+            "A type of keyboard"
+        ]
+    },
+    {
+        "id": 9,
+        "skill": "Problem Solving",
+        "question": "What should you do first when debugging a program?",
+        "options": [
+            "Ignore the error",
+            "Identify and understand the error",
+            "Delete the entire project",
+            "Turn off the computer"
+        ]
+    },
+    {
+        "id": 10,
+        "skill": "Programming Basics",
+        "question": "What is the purpose of testing software?",
+        "options": [
+            "To find defects and verify behavior",
+            "To make the computer heavier",
+            "To remove all documentation",
+            "To change the keyboard"
+        ]
+    }
+ ]
+
+    return render_template(
+        "skill_assessment.html",
+        career=career,
+        questions=questions
+    )
+
+# Submit, evaluate, and save the assessment
+
+@app.route("/submit-assessment", methods=["POST"])
+@login_required
+def submit_assessment():
+    correct_answers = {
+        1: 0,
+        2: 1,
+        3: 1,
+        4: 0,
+        5: 0,
+        6: 1,
+        7: 0,
+        8: 0,
+        9: 1,
+        10: 0
+    }
+
+    total_questions = len(correct_answers)
+    score = 0
+
+
+    # Define skill categories and their question IDs
+    skill_categories = {
+        "Programming Basics": [1, 2, 5, 8, 10],
+        "Web Development": [3, 4],
+        "Databases": [6],
+        "Networking": [7],
+        "Problem Solving": [9]
+    }
+
+
+# Calculate the score
+    for question_id, correct_option in correct_answers.items():
+        submitted_answer = request.form.get(
+            f"question_{question_id}"
+        )
+
+        if submitted_answer == str(correct_option):
+            score += 1
+
+    
+# Calculate individual skill scores
+    skill_results = []
+
+    for skill_name, question_ids in skill_categories.items():
+        skill_total = len(question_ids)
+        skill_score = 0
+
+        for question_id in question_ids:
+            submitted_answer = request.form.get(
+                f"question_{question_id}"
+            )
+
+            if submitted_answer == str(correct_answers[question_id]):
+                skill_score += 1
+
+        skill_percentage = (skill_score / skill_total) * 100
+
+        skill_results.append({
+            "skill_name": skill_name,
+            "total_questions": skill_total,
+            "correct_answers": skill_score,
+            "percentage": skill_percentage
+        })
+
+    # Generate personalized learning recommendations
+    recommendations = []
+
+    learning_topics = {
+        "Programming Basics": {
+            "beginner": [
+                "Learn Python variables and data types",
+                "Practise conditional statements and loops",
+                "Understand functions and basic programming"
+            ],
+            "intermediate": [
+                "Practise lists, dictionaries, and functions",
+                "Learn object-oriented programming",
+                "Build small Python projects"
+            ],
+            "advanced": [
+                "Explore advanced Python concepts",
+                "Practise algorithms and data structures",
+                "Build a complete programming project"
+            ]
+        },
+        "Web Development": {
+            "beginner": [
+                "Learn HTML structure and common tags",
+                "Understand CSS styling and layouts",
+                "Practise creating a simple webpage"
+            ],
+            "intermediate": [
+                "Practise responsive web design",
+                "Learn JavaScript DOM manipulation",
+                "Build interactive web applications"
+            ],
+            "advanced": [
+                "Explore advanced JavaScript",
+                "Learn frontend frameworks",
+                "Build a complete full-stack project"
+            ]
+        },
+        "Databases": {
+            "beginner": [
+                "Learn database tables and records",
+                "Practise basic SQL SELECT queries",
+                "Understand primary keys and foreign keys"
+            ],
+            "intermediate": [
+                "Practise SQL joins and subqueries",
+                "Learn database relationships",
+                "Practise INSERT, UPDATE, and DELETE"
+            ],
+            "advanced": [
+                "Explore database indexing",
+                "Learn query optimization",
+                "Design a database for a real project"
+            ]
+        },
+        "Networking": {
+            "beginner": [
+                "Learn the OSI and TCP/IP models",
+                "Understand IP addresses",
+                "Study basic networking devices"
+            ],
+            "intermediate": [
+                "Practise subnetting",
+                "Learn DNS, DHCP, and routing",
+                "Explore TCP and UDP"
+            ],
+            "advanced": [
+                "Study network security fundamentals",
+                "Practise network troubleshooting",
+                "Explore advanced routing concepts"
+            ]
+        },
+        "Problem Solving": {
+            "beginner": [
+                "Practise simple logical reasoning questions",
+                "Learn algorithms and flowcharts",
+                "Solve beginner programming problems"
+            ],
+            "intermediate": [
+                "Practise arrays and searching algorithms",
+                "Solve coding challenges regularly",
+                "Learn debugging techniques"
+            ],
+            "advanced": [
+                "Practise advanced algorithms",
+                "Solve data structure problems",
+                "Work on competitive programming challenges"
+            ]
+        }
+    }
+
+    for skill in skill_results:
+        skill_name = skill["skill_name"]
+        skill_percentage = skill["percentage"]
+
+        if skill_percentage < 40:
+            level = "beginner"
+        elif skill_percentage < 80:
+            level = "intermediate"
+        else:
+            level = "advanced"
+
+        topics = learning_topics.get(skill_name, {}).get(level, [])
+
+        recommendations.append({
+            "skill_name": skill_name,
+            "percentage": skill_percentage,
+            "level": level.title(),
+            "topics": topics
+        })
+
+# Calculate percentage
+    percentage = (score / total_questions) * 100
+
+# Determine skill level
+    if percentage < 40:
+        skill_level = "Beginner"
+    elif percentage < 80:
+        skill_level = "Intermediate"
+    else:
+        skill_level = "Advanced"
+
+# Get the user's selected career
+    connection = get_db_connection()
+
+    try:
+        user = connection.execute(
+            """
+            SELECT selected_career
+            FROM users
+            WHERE id = ?
+            """,
+            (session["user_id"],)
+        ).fetchone()
+
+        if not user or not user["selected_career"]:
+            flash(
+                "Please select your career before taking the assessment.",
+                "error"
+            )
+            return redirect(url_for("career_selection"))
+
+        career = user["selected_career"]
+
+
+        # Save the overall assessment result
+        cursor = connection.execute(
+            """
+            INSERT INTO assessments (
+                user_id,
+                career,
+                total_questions,
+                correct_answers,
+                percentage,
+                skill_level
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session["user_id"],
+                career,
+                total_questions,
+                score,
+                percentage,
+                skill_level
+            )
+        )
+
+        # Get the ID of the saved assessment
+        assessment_id = cursor.lastrowid
+
+        # Save each skill's result
+        for skill in skill_results:
+            connection.execute(
+                """
+                INSERT INTO assessment_skills (
+                    assessment_id,
+                    skill_name,
+                    total_questions,
+                    correct_answers,
+                    percentage
+                )
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    assessment_id,
+                    skill["skill_name"],
+                    skill["total_questions"],
+                    skill["correct_answers"],
+                    skill["percentage"]
+                )
+            )
+
+        # Save all changes
+        connection.commit()
+
+
+
+    except sqlite3.Error:
+        connection.rollback()
+        app.logger.exception("Failed to save assessment result")
+
+        flash(
+            "Unable to save your assessment result. Please try again.",
+            "error"
+        )
+        return redirect(url_for("skill_assessment"))
+
+    finally:
+        connection.close()
+
+
+# Display the result and skill-wise analysis
+    return render_template(
+        "assessment_result.html",
+        score=score,
+        total_questions=total_questions,
+        percentage=percentage,
+        skill_level=skill_level,
+        skill_results=skill_results,
+        recommendations=recommendations
+    )
+
+
+
+
+
+# Start the application
+if __name__ == "__main__":
+    init_db()
+    app.run(debug=True)
