@@ -21,11 +21,17 @@ import os
 app = Flask(__name__)
 
 # Development secret only.
-# Replace this with an environment variable before deployment.
+# Load the secret key from an environment variable.
 app.secret_key = os.environ.get("SECRET_KEY")
 
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production"
+)
+
 DATABASE = Path(__file__).resolve().parent / "database.db"
-print("SKILLBRIDGE DATABASE:", DATABASE)
+
 
 # STEP 6: Check whether a user is logged in
 def login_required(view_function):
@@ -573,7 +579,6 @@ def learning_roadmap():
             "topics": topics
         })
 
-    print("FINAL LEARNING ROADMAP:", roadmap)
 
     return render_template(
         "learning_roadmap.html",
@@ -1094,10 +1099,7 @@ def submit_assessment():
     )
 
 
-
-
-
 # Start the application
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True)
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")
