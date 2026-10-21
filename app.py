@@ -347,10 +347,12 @@ def dashboard():
             connection,
             """
             SELECT
-                COUNT(*) AS total_assessments,
-                COALESCE(ROUND(AVG(percentage), 1), 0)
-                    AS average_score,
-                COALESCE(MAX(percentage), 0)
+            COUNT(*) AS total_assessments,
+            COALESCE(
+                  ROUND(CAST(AVG(percentage) AS NUMERIC), 1),
+                  0
+            ) AS average_score,
+            COALESCE(MAX(percentage), 0)
                     AS best_score
             FROM assessments
             WHERE user_id = ?
