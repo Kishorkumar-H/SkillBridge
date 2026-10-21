@@ -11,40 +11,87 @@
     <style>
         body {
             font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+            background: transparent;
+            color: #f8fafc;
         }
 
         .career-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease,
-                        border-color 0.2s ease;
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            transition: transform 0.25s ease,
+                        box-shadow 0.25s ease,
+                        border-color 0.25s ease,
+                        background 0.25s ease;
         }
 
         .career-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 25px rgba(79, 70, 229, 0.10);
+            transform: translateY(-5px);
+            border-color: rgba(129, 140, 248, 0.8);
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.18);
         }
 
         .career-card:has(input[type="radio"]:checked) {
-            border-color: #4f46e5;
-            background-color: #eef2ff;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.12);
+            border-color: #818cf8;
+            background: rgba(49, 46, 129, 0.65);
+            box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.25),
+                        0 12px 30px rgba(99, 102, 241, 0.15);
         }
 
         .career-card:has(input[type="radio"]:focus-visible) {
-            outline: 2px solid #6366f1;
+            outline: 2px solid #a5b4fc;
             outline-offset: 3px;
+        }
+
+        .universe-panel {
+            background: rgba(15, 23, 42, 0.76);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .career-number {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            box-shadow: 0 5px 18px rgba(99, 102, 241, 0.25);
+        }
+
+        .universe-button {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .universe-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .universe-button:focus-visible,
+        .dashboard-link:focus-visible {
+            outline: 2px solid #a5b4fc;
+            outline-offset: 3px;
+        }
+
+        /* Keep the page above the interactive universe background. */
+        header,
+        main,
+        footer {
+            position: relative;
+            z-index: 1;
         }
     </style>
 </head>
 
-<body class="bg-slate-100 min-h-screen text-slate-800">
+<body class="min-h-screen">
 
     <!-- Header -->
-    <header class="bg-slate-950 text-white shadow-md">
+    <header class="border-b border-white/10 bg-slate-950/75
+                   backdrop-blur-xl">
         <div class="max-w-7xl mx-auto px-5 py-5 md:px-8
                     flex flex-wrap items-center justify-between gap-4">
 
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">
+                <h1 class="text-2xl font-bold tracking-tight text-white">
                     Skill<span class="text-indigo-400">Bridge</span>
                 </h1>
 
@@ -54,11 +101,13 @@
             </div>
 
             <a href="{{ url_for('dashboard') }}"
-               class="inline-flex items-center gap-2 rounded-lg
-                      border border-slate-700 px-4 py-2
+               class="dashboard-link inline-flex items-center gap-2
+                      rounded-xl border border-white/15 px-4 py-2
                       text-sm font-medium text-slate-200
-                      hover:bg-slate-800 hover:text-white transition">
-                ← Dashboard
+                      hover:bg-white/10 hover:text-white transition">
+
+                <span aria-hidden="true">←</span>
+                Dashboard
             </a>
 
         </div>
@@ -68,22 +117,28 @@
     <main class="max-w-6xl mx-auto px-5 py-8 md:px-8 md:py-12">
 
         <!-- Page Introduction -->
-        <section class="mb-8 md:mb-10">
+        <section class="mb-9 md:mb-12">
 
-            <span class="inline-block rounded-full bg-indigo-100
-                         px-3 py-1 text-sm font-semibold text-indigo-700 mb-4">
+            <span class="inline-flex items-center gap-2 rounded-full
+                         border border-indigo-400/30 bg-indigo-500/10
+                         px-4 py-2 text-xs font-bold tracking-widest
+                         text-indigo-300 mb-5">
+
+                <span aria-hidden="true">✦</span>
                 YOUR CAREER JOURNEY
             </span>
 
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight
-                       text-slate-900 mb-3">
-                Choose Your Future Career
+            <h2 class="text-3xl md:text-5xl font-bold tracking-tight
+                       text-white mb-4">
+                Choose Your
+                <span class="text-indigo-400">Future Career</span>
             </h2>
 
-            <p class="text-slate-600 leading-7 max-w-2xl">
-                Discover the career that matches your ambitions.
-                SkillBridge will help you assess your skills,
-                identify gaps, and plan your learning journey.
+            <p class="text-slate-300 leading-7 max-w-2xl">
+                Every great journey starts with a destination.
+                Choose your career path and let SkillBridge help you
+                assess your skills, discover your strengths, and
+                plan your learning journey.
             </p>
 
         </section>
@@ -91,43 +146,53 @@
         <!-- Career Selection Form -->
         <form method="POST" action="{{ url_for('career_selection') }}">
 
+            <input type="hidden"
+                   name="csrf_token"
+                   value="{{ csrf_token() }}">
+
+            <!-- Section Heading -->
             <div class="flex flex-wrap items-center justify-between
-                        gap-3 mb-5">
+                        gap-4 mb-6">
 
                 <div>
-                    <h3 class="text-xl font-bold text-slate-900">
-                        Available Career Paths
+                    <h3 class="text-xl md:text-2xl font-bold text-white">
+                        Explore Career Paths
                     </h3>
 
-                    <p class="text-sm text-slate-500 mt-1">
-                        Select one career to continue.
+                    <p class="text-sm text-slate-400 mt-2">
+                        Select one career to begin your journey.
                     </p>
                 </div>
 
-                <span class="text-sm font-medium text-indigo-700
-                             bg-indigo-50 border border-indigo-100
-                             rounded-lg px-3 py-2">
+                <span class="inline-flex items-center gap-2
+                             rounded-xl border border-indigo-400/25
+                             bg-indigo-500/10 px-4 py-2
+                             text-sm font-medium text-indigo-300">
+
+                    <span aria-hidden="true">◎</span>
                     Choose one career
                 </span>
 
             </div>
 
+            <!-- Career Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2
                         lg:grid-cols-3 gap-5">
 
                 {% for career in careers %}
 
-                <label class="career-card block bg-white p-6
-                              rounded-2xl border-2 border-slate-200
-                              cursor-pointer shadow-sm">
+                <label class="career-card block p-6 rounded-2xl
+                              cursor-pointer shadow-lg">
 
-                    <div class="flex items-start justify-between gap-3 mb-5">
+                    <div class="flex items-start justify-between gap-3 mb-6">
 
-                        <div class="h-12 w-12 flex items-center
-                                    justify-center rounded-xl
-                                    bg-indigo-100 text-indigo-700
-                                    text-xl font-bold">
+                        <div class="career-number h-12 w-12
+                                    flex items-center justify-center
+                                    rounded-xl text-white text-lg
+                                    font-bold">
+
                             {{ loop.index }}
+
                         </div>
 
                         <input type="radio"
@@ -135,26 +200,28 @@
                                value="{{ career }}"
                                required
                                aria-label="Select {{ career }}"
-                               class="mt-2 h-5 w-5 accent-indigo-600
+                               class="mt-2 h-5 w-5 accent-indigo-500
                                       cursor-pointer shrink-0">
                     </div>
 
-                    <h4 class="text-lg font-bold text-slate-900">
+                    <h4 class="text-lg font-bold text-white">
                         {{ career }}
                     </h4>
 
-                    <p class="text-sm text-slate-500 leading-6 mt-2">
-                        Build relevant skills and prepare for this career.
+                    <p class="text-sm text-slate-400 leading-6 mt-3">
+                        Build relevant skills, strengthen your
+                        knowledge, and prepare for this career.
                     </p>
 
-                    <div class="mt-5 pt-4 border-t border-slate-100
+                    <div class="mt-6 pt-4 border-t border-white/10
                                 flex items-center justify-between">
 
-                        <span class="text-xs font-medium text-slate-500">
+                        <span class="text-xs font-medium text-slate-400">
                             Career pathway
                         </span>
 
-                        <span class="text-indigo-600 font-semibold"
+                        <span class="text-indigo-300 text-xl
+                                     transition-transform"
                               aria-hidden="true">
                             →
                         </span>
@@ -168,32 +235,32 @@
             </div>
 
             <!-- Form Actions -->
-            <div class="mt-8 rounded-2xl border border-slate-200
-                        bg-white p-5 md:p-6 shadow-sm
+            <div class="universe-panel mt-8 rounded-2xl p-5 md:p-7
                         flex flex-col sm:flex-row items-start
-                        sm:items-center justify-between gap-4">
+                        sm:items-center justify-between gap-5">
 
                 <div>
-                    <h4 class="font-bold text-slate-900">
-                        Ready to move forward?
+                    <h4 class="font-bold text-white text-lg">
+                        Ready to take the next step?
                     </h4>
 
-                    <p class="text-sm text-slate-500 mt-1">
-                        You can continue to your career assessment.
+                    <p class="text-sm text-slate-400 mt-2 leading-6">
+                        Your selected career will guide your
+                        skill assessment and learning recommendations.
                     </p>
                 </div>
 
                 <button type="submit"
-                        class="w-full sm:w-auto inline-flex
-                               items-center justify-center gap-2
-                               bg-indigo-600 text-white font-semibold
-                               px-7 py-3 rounded-xl
-                               hover:bg-indigo-700
-                               focus:outline-none focus:ring-4
-                               focus:ring-indigo-200
-                               transition shadow-sm">
+                        class="universe-button w-full sm:w-auto
+                               inline-flex items-center justify-center
+                               gap-3 text-white font-semibold
+                               px-7 py-3.5 rounded-xl shadow-lg
+                               focus:outline-none">
+
                     Save My Career
+
                     <span aria-hidden="true">→</span>
+
                 </button>
 
             </div>
@@ -201,11 +268,21 @@
         </form>
 
         <!-- Footer -->
-        <footer class="text-center text-sm text-slate-400 mt-10">
-            © 2026 SkillBridge · Learn today, grow tomorrow.
+        <footer class="text-center text-sm text-slate-500 mt-12 pb-4">
+            <p class="font-semibold text-slate-300">
+                Skill<span class="text-indigo-400">Bridge</span>
+            </p>
+
+            <p class="mt-2">
+                Learn today, grow tomorrow. · © 2026 SkillBridge
+            </p>
         </footer>
 
     </main>
+
+    <!-- Interactive Universe Background -->
+    <script src="{{ url_for('static', filename='js/interactive.js') }}"
+            defer></script>
 
 </body>
 </html>

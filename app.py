@@ -15,6 +15,7 @@ from flask import (
     session,
     jsonify
 )
+from flask_wtf.csrf import CSRFProtect
 
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
@@ -26,13 +27,17 @@ app = Flask(__name__)
 
 # Development secret only.
 # Load the secret key from an environment variable.
-app.secret_key = os.environ.get("SECRET_KEY")
+app.secret_key = os.environ.get("SECRET_KEY") or "local-development-key-change-me"
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production"
+    SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production",
+    WTF_CSRF_SECRET_KEY=os.environ.get("SECRET_KEY") or "local-development-key-change-me"
 )
+
+
+csrf = CSRFProtect(app)
 
 DATABASE = Path(
     os.environ.get(
@@ -273,6 +278,9 @@ def register():
         flash("Account created successfully! Please log in.", "success")
         return redirect(url_for("login"))
 
+    with app.test_request_context():
+        print("Template CSRF token available:", "csrf_token" in app.jinja_env.globals)
+
     return render_template("register.html")
 
 
@@ -340,7 +348,7 @@ def dashboard():
             """
             SELECT
                 COUNT(*) AS total_assessments,
-                COALESCE(ROUND(AVG(percentage)::NUMERIC, 1), 0)
+                COALESCE(ROUND(AVG(percentage), 1), 0)
                     AS average_score,
                 COALESCE(MAX(percentage), 0)
                     AS best_score
@@ -422,6 +430,7 @@ def profile():
 
 
 @app.route("/assessment-history")
+@login_required
 def assessment_history():
     if "user_id" not in session:
         flash("Please log in to view your assessment history.", "error")

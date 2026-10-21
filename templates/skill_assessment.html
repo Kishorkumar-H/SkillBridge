@@ -1,35 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#020617">
+    <meta name="description"
+          content="Evaluate your technical knowledge with the SkillBridge career-based skill assessment.">
 
     <title>SkillBridge | Skill Assessment</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body {
-            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px;
         }
 
+        body {
+            margin: 0;
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+            background: transparent;
+            color: #f8fafc;
+        }
+
+        /* Glass-style panels */
+        .universe-panel {
+            background: rgba(15, 23, 42, 0.80);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .universe-panel-light {
+            background: rgba(30, 41, 59, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.20);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Assessment question cards */
         .question-card {
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: rgba(15, 23, 42, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: border-color 0.2s ease,
+                        box-shadow 0.2s ease,
+                        transform 0.2s ease;
         }
 
         .question-card:hover {
-            border-color: #c7d2fe;
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.06);
+            border-color: rgba(129, 140, 248, 0.45);
+            box-shadow: 0 10px 28px rgba(79, 70, 229, 0.12);
         }
 
+        /* Answer options */
         .answer-option {
             display: flex;
             align-items: flex-start;
             gap: 12px;
             padding: 14px 16px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid rgba(148, 163, 184, 0.24);
             border-radius: 12px;
-            background: #ffffff;
+            background: rgba(2, 6, 23, 0.42);
             cursor: pointer;
             transition: background 0.2s ease,
                         border-color 0.2s ease,
@@ -37,283 +73,584 @@
         }
 
         .answer-option:hover {
-            background: #eef2ff;
-            border-color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.10);
+            border-color: rgba(129, 140, 248, 0.55);
         }
 
         .answer-option:has(input:checked) {
-            background: #eef2ff;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 1px #6366f1;
+            background: rgba(99, 102, 241, 0.17);
+            border-color: #818cf8;
+            box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.45);
         }
 
         .answer-option:has(input:focus-visible) {
-            outline: 2px solid #818cf8;
+            outline: 2px solid #a5b4fc;
             outline-offset: 3px;
         }
 
         .answer-option input {
             margin-top: 4px;
-            accent-color: #4f46e5;
+            accent-color: #818cf8;
             flex-shrink: 0;
         }
 
-        .submit-button {
-            transition: background 0.2s ease,
-                        transform 0.2s ease,
-                        box-shadow 0.2s ease;
+        /* Main action button */
+        .universe-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #ffffff;
+            transition: transform 0.2s ease,
+                        box-shadow 0.2s ease,
+                        filter 0.2s ease;
         }
 
-        .submit-button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.2);
+        .universe-button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+            box-shadow: 0 9px 26px rgba(99, 102, 241, 0.28);
+        }
+
+        .universe-button:active {
+            transform: scale(0.99);
+        }
+
+        .universe-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+            transform: none;
+        }
+
+        /* Page labels */
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            border: 1px solid rgba(129, 140, 248, 0.25);
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.12);
+            color: #c4b5fd;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        /* Keep page elements above the universe canvas */
+        header,
+        main,
+        footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        a:focus-visible,
+        button:focus-visible {
+            outline: 2px solid #a5b4fc;
+            outline-offset: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
 
-<body class="bg-slate-100 min-h-screen text-slate-800">
 
-    <!-- Header -->
-    <header class="bg-slate-950 text-white shadow-md">
-        <div class="max-w-6xl mx-auto px-5 py-5 md:px-8
-                    flex flex-wrap items-center justify-between gap-4">
+<body class="min-h-screen bg-transparent text-slate-100 antialiased">
+
+    <!-- ======================================== -->
+    <!-- HEADER                                   -->
+    <!-- ======================================== -->
+
+    <header class="sticky top-0 z-50 border-b border-white/10
+                   bg-slate-950/85 text-white
+                   shadow-lg backdrop-blur-xl">
+
+        <div class="mx-auto flex max-w-6xl flex-wrap
+                    items-center justify-between gap-4
+                    px-5 py-5 md:px-8">
 
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">
-                    Skill<span class="text-indigo-400">Bridge</span>
-                </h1>
+                <a href="{{ url_for('home') }}"
+                   class="text-2xl font-extrabold tracking-tight"
+                   aria-label="SkillBridge home">
 
-                <p class="text-sm text-slate-400 mt-1">
+                    Skill<span class="text-indigo-400">Bridge</span>
+
+                </a>
+
+                <p class="mt-1 text-sm text-slate-400">
                     Build your skills. Shape your future.
                 </p>
             </div>
 
             <a href="{{ url_for('dashboard') }}"
-               class="inline-flex items-center gap-2 rounded-lg
-                      border border-slate-700 px-4 py-2
-                      text-sm font-medium text-slate-200
-                      hover:bg-slate-800 hover:text-white transition">
-                ← Back to Dashboard
+               class="inline-flex items-center justify-center gap-2
+                      rounded-xl border border-white/15
+                      bg-white/5 px-4 py-3 text-sm
+                      font-semibold text-slate-200
+                      transition hover:bg-white/10
+                      hover:text-white">
+
+                <span aria-hidden="true">←</span>
+                Dashboard
+
             </a>
 
         </div>
+
     </header>
 
-    <main class="max-w-6xl mx-auto px-5 py-8 md:px-8 md:py-12">
 
-        <!-- Page Introduction -->
-        <section class="bg-gradient-to-r from-indigo-600
-                        via-indigo-700 to-violet-700
-                        text-white rounded-2xl p-7 md:p-10 mb-8
-                        shadow-lg shadow-indigo-200/50">
+    <!-- ======================================== -->
+    <!-- MAIN CONTENT                             -->
+    <!-- ======================================== -->
 
-            <p class="text-indigo-100 text-sm font-semibold mb-3">
-                YOUR CAREER JOURNEY
-            </p>
+    <main class="mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-12">
 
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">
-                Skill Assessment
-            </h2>
+        <!-- ==================================== -->
+        <!-- PAGE INTRODUCTION                    -->
+        <!-- ==================================== -->
 
-            <p class="text-indigo-100 leading-7 max-w-2xl mb-6">
-                Answer the questions to evaluate your current knowledge
-                and discover the skills you can improve.
-            </p>
+        <section class="relative mb-9 overflow-hidden
+                        rounded-3xl border border-indigo-300/20
+                        bg-gradient-to-br from-indigo-950/95
+                        via-indigo-900/85 to-violet-950/90
+                        p-6 shadow-2xl shadow-indigo-950/30
+                        md:p-10">
 
-            <div class="bg-white/10 border border-white/10
-                        rounded-xl p-4 md:max-w-md">
-
-                <p class="text-sm text-indigo-100 mb-1">
-                    Your Selected Career
-                </p>
-
-                <p class="text-xl font-bold">
-                    {{ career }}
-                </p>
-
+            <!-- Decorative universe rings -->
+            <div class="pointer-events-none absolute
+                        -right-12 -top-16 h-64 w-64
+                        rounded-full border border-indigo-300/10">
             </div>
 
-        </section>
+            <div class="pointer-events-none absolute
+                        -right-2 -top-6 h-44 w-44
+                        rounded-full border border-violet-300/10">
+            </div>
 
-        <!-- Assessment Information -->
-        <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="pointer-events-none absolute
+                        right-12 top-10 h-3 w-3
+                        rounded-full bg-violet-300
+                        shadow-lg shadow-violet-300/50">
+            </div>
 
-            <article class="bg-white border border-slate-200
-                            rounded-2xl p-5 shadow-sm">
+            <div class="relative z-10 max-w-3xl">
 
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="h-10 w-10 rounded-xl bg-indigo-100
-                                text-indigo-700 flex items-center
-                                justify-center text-lg">
-                        📋
-                    </div>
-
-                    <p class="text-sm text-slate-500">
-                        Assessment
-                    </p>
-                </div>
-
-                <p class="text-lg font-bold text-slate-900">
-                    Career Based
-                </p>
-
-            </article>
-
-            <article class="bg-white border border-slate-200
-                            rounded-2xl p-5 shadow-sm">
-
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="h-10 w-10 rounded-xl bg-indigo-100
-                                text-indigo-700 flex items-center
-                                justify-center text-lg">
-                        ☑️
-                    </div>
-
-                    <p class="text-sm text-slate-500">
-                        Question Type
-                    </p>
-                </div>
-
-                <p class="text-lg font-bold text-slate-900">
-                    Multiple Choice
-                </p>
-
-            </article>
-
-            <article class="bg-white border border-slate-200
-                            rounded-2xl p-5 shadow-sm">
-
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="h-10 w-10 rounded-xl bg-indigo-100
-                                text-indigo-700 flex items-center
-                                justify-center text-lg">
-                        🎯
-                    </div>
-
-                    <p class="text-sm text-slate-500">
-                        Your Goal
-                    </p>
-                </div>
-
-                <p class="text-lg font-bold text-slate-900">
-                    Identify Skill Gaps
-                </p>
-
-            </article>
-
-        </section>
-
-        <!-- Assessment Questions -->
-        <section class="bg-white border border-slate-200
-                        rounded-2xl p-5 md:p-8 shadow-sm">
-
-            <div class="mb-7 pb-5 border-b border-slate-100">
-
-                <span class="inline-block rounded-full bg-indigo-100
-                             px-3 py-1 text-xs font-semibold
-                             text-indigo-700 mb-3">
-                    KNOWLEDGE CHECK
+                <span class="section-label mb-5">
+                    <span aria-hidden="true">✦</span>
+                    YOUR CAREER JOURNEY
                 </span>
 
-                <h3 class="text-2xl font-bold text-slate-900 mb-2">
-                    Basic Skill Assessment
-                </h3>
+                <h1 class="mt-5 text-3xl font-extrabold
+                           tracking-tight text-white
+                           sm:text-4xl md:text-5xl">
 
-                <p class="text-slate-500 leading-6">
-                    Answer all {{ questions|length }} questions
-                    to evaluate your basic IT knowledge.
+                    Skill
+                    <span class="text-indigo-300">Assessment</span>
+
+                </h1>
+
+                <p class="mt-5 max-w-2xl text-sm
+                          leading-7 text-indigo-100/85 sm:text-base">
+
+                    Answer the questions to evaluate your current knowledge
+                    and discover the skills you can improve. Use your results
+                    to identify areas for growth and plan your next steps.
+
                 </p>
 
-            </div>
+                <!-- Selected Career -->
+                <div class="universe-panel-light mt-7
+                            rounded-2xl p-5 sm:max-w-md">
 
-            <form method="POST"
-                  action="{{ url_for('submit_assessment') }}">
+                    <div class="flex items-center gap-3">
 
-                {% for question in questions %}
+                        <div class="flex h-11 w-11 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border
+                                    border-indigo-300/20
+                                    bg-indigo-400/10 text-2xl">
 
-                <article class="question-card border border-slate-200
-                                rounded-2xl p-5 md:p-6 mb-6">
+                            🎯
 
-                    <div class="flex items-start gap-3 mb-5">
+                        </div>
 
-                        <span class="flex-shrink-0 h-9 w-9 rounded-xl
-                                     bg-indigo-100 text-indigo-700
-                                     flex items-center justify-center
-                                     font-bold text-sm">
-                            {{ loop.index }}
-                        </span>
+                        <div class="min-w-0">
 
-                        <div class="flex-1 pt-1">
-
-                            <p class="text-xs font-semibold
-                                      uppercase tracking-wide
-                                      text-indigo-600 mb-2">
-                                Question {{ loop.index }} of
-                                {{ questions|length }}
+                            <p class="text-sm text-indigo-200/80">
+                                Your Selected Career
                             </p>
 
-                            <h4 class="font-semibold text-lg
-                                       leading-7 text-slate-900">
-                                {{ question.question }}
-                            </h4>
+                            <p class="mt-1 break-words
+                                      text-lg font-bold text-white">
+
+                                {{ career }}
+
+                            </p>
 
                         </div>
 
                     </div>
 
-                    <div class="space-y-3">
+                </div>
 
-                        {% for option in question.options %}
+            </div>
 
-                        <label class="answer-option">
+        </section>
 
-                            <input
-                                type="radio"
-                                name="question_{{ question.id }}"
-                                value="{{ loop.index0 }}"
-                                required
-                            >
 
-                            <span class="text-sm md:text-base
-                                         leading-6 text-slate-700">
-                                {{ option }}
-                            </span>
+        <!-- ==================================== -->
+        <!-- ASSESSMENT INFORMATION               -->
+        <!-- ==================================== -->
 
-                        </label>
+        <section class="mb-10">
 
-                        {% endfor %}
+            <div class="mb-5">
+
+                <h2 class="text-xl font-bold text-white">
+                    Assessment Overview
+                </h2>
+
+                <p class="mt-2 text-sm text-slate-400">
+                    Understand what this assessment helps you achieve.
+                </p>
+
+            </div>
+
+
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+
+                <!-- Assessment Type -->
+                <article class="universe-panel rounded-2xl p-5 shadow-lg">
+
+                    <div class="mb-4 flex items-center justify-between gap-3">
+
+                        <p class="text-sm font-medium text-slate-400">
+                            Assessment
+                        </p>
+
+                        <div class="flex h-11 w-11 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border
+                                    border-indigo-400/20
+                                    bg-indigo-500/10 text-xl">
+
+                            📋
+
+                        </div>
 
                     </div>
+
+                    <h3 class="text-lg font-bold text-white">
+                        Career Based
+                    </h3>
+
+                    <p class="mt-2 text-sm leading-6 text-slate-400">
+                        Questions to evaluate your current knowledge.
+                    </p>
+
+                </article>
+
+
+                <!-- Question Type -->
+                <article class="universe-panel rounded-2xl p-5 shadow-lg">
+
+                    <div class="mb-4 flex items-center justify-between gap-3">
+
+                        <p class="text-sm font-medium text-slate-400">
+                            Question Type
+                        </p>
+
+                        <div class="flex h-11 w-11 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border
+                                    border-violet-400/20
+                                    bg-violet-500/10 text-xl">
+
+                            ☑️
+
+                        </div>
+
+                    </div>
+
+                    <h3 class="text-lg font-bold text-white">
+                        Multiple Choice
+                    </h3>
+
+                    <p class="mt-2 text-sm leading-6 text-slate-400">
+                        Select one answer for each question.
+                    </p>
+
+                </article>
+
+
+                <!-- Assessment Goal -->
+                <article class="universe-panel rounded-2xl p-5 shadow-lg">
+
+                    <div class="mb-4 flex items-center justify-between gap-3">
+
+                        <p class="text-sm font-medium text-slate-400">
+                            Your Goal
+                        </p>
+
+                        <div class="flex h-11 w-11 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border
+                                    border-emerald-400/20
+                                    bg-emerald-500/10 text-xl">
+
+                            🎯
+
+                        </div>
+
+                    </div>
+
+                    <h3 class="text-lg font-bold text-white">
+                        Identify Skill Gaps
+                    </h3>
+
+                    <p class="mt-2 text-sm leading-6 text-slate-400">
+                        Discover topics you may need to practise.
+                    </p>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================== -->
+        <!-- ASSESSMENT QUESTIONS                -->
+        <!-- ==================================== -->
+
+        <section class="universe-panel rounded-3xl
+                        p-5 shadow-xl md:p-8">
+
+            <!-- Section Heading -->
+            <div class="mb-8 border-b border-white/10 pb-6">
+
+                <span class="section-label mb-4">
+                    <span aria-hidden="true">✦</span>
+                    KNOWLEDGE CHECK
+                </span>
+
+                <h2 class="mt-4 text-2xl font-extrabold
+                           text-white md:text-3xl">
+
+                    Basic Skill Assessment
+
+                </h2>
+
+                <p class="mt-3 text-sm leading-7 text-slate-400">
+
+                    Answer all {{ questions|length }} questions
+                    to evaluate your basic IT knowledge. Choose the
+                    answer that you believe is correct for each question.
+
+                </p>
+
+                <!-- Question Count -->
+                <div class="mt-5 inline-flex items-center gap-2
+                            rounded-xl border border-indigo-400/20
+                            bg-indigo-500/10 px-4 py-2.5
+                            text-sm font-semibold text-indigo-300">
+
+                    <span aria-hidden="true">📝</span>
+
+                    {{ questions|length }} Questions
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================= -->
+            <!-- ASSESSMENT FORM                   -->
+            <!-- ================================= -->
+
+            <form method="POST"
+                  action="{{ url_for('submit_assessment') }}"
+                  id="assessmentForm">
+
+                <!-- CSRF Protection -->
+                <input type="hidden"
+                       name="csrf_token"
+                       value="{{ csrf_token() }}">
+
+
+                <!-- Dynamic Questions -->
+                {% for question in questions %}
+
+                <article class="question-card mb-6 rounded-2xl
+                                p-5 md:p-6"
+                         id="question-{{ question.id }}">
+
+                    <!-- Question Heading -->
+                    <div class="mb-5 flex items-start gap-3">
+
+                        <span class="flex h-10 w-10 shrink-0
+                                     items-center justify-center
+                                     rounded-xl border
+                                     border-indigo-400/20
+                                     bg-indigo-500/10
+                                     text-sm font-extrabold
+                                     text-indigo-300">
+
+                            {{ loop.index }}
+
+                        </span>
+
+                        <div class="min-w-0 flex-1 pt-1">
+
+                            <p class="mb-2 text-xs font-bold
+                                      uppercase tracking-widest
+                                      text-indigo-300">
+
+                                Question {{ loop.index }} of
+                                {{ questions|length }}
+
+                            </p>
+
+                            <h3 class="text-base font-bold
+                                       leading-7 text-white md:text-lg">
+
+                                {{ question.question }}
+
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Answer Options -->
+                    <fieldset>
+
+                        <legend class="mb-3 text-sm text-slate-400">
+
+                            Choose one answer:
+
+                        </legend>
+
+                        <div class="space-y-3">
+
+                            {% for option in question.options %}
+
+                            <label class="answer-option">
+
+                                <input
+                                    type="radio"
+                                    name="question_{{ question.id }}"
+                                    value="{{ loop.index0 }}"
+                                    required
+                                >
+
+                                <span class="text-sm leading-6
+                                             text-slate-300 md:text-base">
+
+                                    {{ option }}
+
+                                </span>
+
+                            </label>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </fieldset>
 
                 </article>
 
                 {% endfor %}
 
-                <!-- Submit Section -->
-                <div class="mt-8 rounded-2xl bg-slate-50
-                            border border-slate-200 p-5 md:p-6">
 
-                    <h4 class="font-bold text-slate-900 mb-2">
-                        Ready to submit your answers?
-                    </h4>
+                <!-- ================================= -->
+                <!-- SUBMIT SECTION                   -->
+                <!-- ================================= -->
 
-                    <p class="text-sm text-slate-500 leading-6 mb-5">
-                        Review your selected answers before submitting
-                        your assessment.
+                <div class="universe-panel-light mt-8 rounded-2xl p-5 md:p-7">
+
+                    <div class="flex items-start gap-4">
+
+                        <div class="flex h-12 w-12 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border
+                                    border-indigo-400/20
+                                    bg-indigo-500/10 text-2xl">
+
+                            🚀
+
+                        </div>
+
+                        <div class="min-w-0">
+
+                            <h3 class="text-lg font-bold text-white">
+
+                                Ready to Submit Your Answers?
+
+                            </h3>
+
+                            <p class="mt-2 text-sm leading-7 text-slate-400">
+
+                                Review your selections before submitting.
+                                Make sure every question has an answer.
+                                Your assessment results will help guide
+                                your future learning.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Submission Feedback -->
+                    <p id="submissionMessage"
+                       class="mt-5 hidden rounded-xl border
+                              border-amber-400/20 bg-amber-500/10
+                              p-4 text-sm text-amber-200"
+                       role="alert"
+                       aria-live="polite">
                     </p>
 
+
+                    <!-- Submit Button -->
                     <button
                         type="submit"
-                        class="submit-button w-full bg-indigo-600
-                               text-white py-3.5 px-6 rounded-xl
-                               font-semibold hover:bg-indigo-700
-                               focus:outline-none focus:ring-4
-                               focus:ring-indigo-200">
+                        id="submitAssessment"
+                        class="universe-button mt-6 w-full
+                               rounded-xl px-6 py-4
+                               font-bold shadow-lg">
 
                         Submit Assessment
+
                         <span aria-hidden="true">→</span>
 
                     </button>
+
+                    <p class="mt-4 text-center text-xs leading-5 text-slate-500">
+
+                        Once submitted, your answers will be evaluated
+                        by SkillBridge.
+
+                    </p>
 
                 </div>
 
@@ -321,12 +658,132 @@
 
         </section>
 
-        <!-- Footer -->
-        <footer class="text-center text-sm text-slate-400 mt-10">
-            © 2026 SkillBridge · Learn today, grow tomorrow.
+
+        <!-- ==================================== -->
+        <!-- FOOTER                               -->
+        <!-- ==================================== -->
+
+        <footer class="mt-10 border-t border-white/10 py-6">
+
+            <div class="flex flex-col items-center
+                        justify-between gap-3 sm:flex-row">
+
+                <a href="{{ url_for('home') }}"
+                   class="text-lg font-extrabold tracking-tight text-white">
+
+                    Skill<span class="text-indigo-400">Bridge</span>
+
+                </a>
+
+                <p class="text-center text-sm text-slate-500">
+
+                    © 2026 SkillBridge · Learn Today, Grow Tomorrow.
+
+                </p>
+
+            </div>
+
         </footer>
 
     </main>
+
+
+    <!-- ======================================== -->
+    <!-- ASSESSMENT FORM VALIDATION               -->
+    <!-- ======================================== -->
+
+    <script>
+        (function () {
+            const form = document.getElementById("assessmentForm");
+            const submitButton =
+                document.getElementById("submitAssessment");
+            const submissionMessage =
+                document.getElementById("submissionMessage");
+
+            if (!form || !submitButton || !submissionMessage) {
+                return;
+            }
+
+            form.addEventListener("submit", function (event) {
+                const questionNames = new Set(
+                    Array.from(
+                        form.querySelectorAll('input[type="radio"]')
+                    ).map(function (input) {
+                        return input.name;
+                    })
+                );
+
+                let firstUnansweredQuestion = null;
+
+                questionNames.forEach(function (name) {
+                    const selected = form.querySelector(
+                        'input[name="' + name + '"]:checked'
+                    );
+
+                    if (!selected && !firstUnansweredQuestion) {
+                        firstUnansweredQuestion = name;
+                    }
+                });
+
+                if (firstUnansweredQuestion) {
+                    event.preventDefault();
+
+                    submissionMessage.textContent =
+                        "Please answer every question before submitting.";
+
+                    submissionMessage.classList.remove("hidden");
+
+                    const firstInput = form.querySelector(
+                        'input[name="' + firstUnansweredQuestion + '"]'
+                    );
+
+                    if (firstInput) {
+                        const questionCard =
+                            firstInput.closest(".question-card");
+
+                        if (questionCard) {
+                            questionCard.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center"
+                            });
+                        }
+
+                        firstInput.focus({
+                            preventScroll: true
+                        });
+                    }
+
+                    return;
+                }
+
+                submissionMessage.classList.add("hidden");
+
+                /*
+                 * Leave the existing Flask submission flow unchanged.
+                 * The browser will submit the form normally.
+                 */
+                submitButton.disabled = true;
+                submitButton.textContent = "Submitting Assessment...";
+            });
+
+            form.addEventListener("change", function (event) {
+                if (
+                    event.target.matches('input[type="radio"]') &&
+                    submissionMessage
+                ) {
+                    submissionMessage.classList.add("hidden");
+                }
+            });
+        })();
+    </script>
+
+
+    <!-- ======================================== -->
+    <!-- INTERACTIVE UNIVERSE BACKGROUND          -->
+    <!-- ======================================== -->
+
+    <script src="{{ url_for('static', filename='js/interactive.js') }}"
+            defer></script>
 
 </body>
 </html>

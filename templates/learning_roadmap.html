@@ -1,161 +1,473 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#020617">
+    <meta name="description"
+          content="Follow your personalized SkillBridge learning roadmap, strengthen your skills, and work toward your career goals.">
 
     <title>Learning Roadmap | SkillBridge</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body {
-            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        html {
+            scroll-behavior: smooth;
         }
 
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system,
+                         BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: transparent;
+            color: #f8fafc;
+        }
+
+        /* Glass-style panels */
+        .universe-panel {
+            background: rgba(15, 23, 42, 0.80);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .universe-panel-light {
+            background: rgba(30, 41, 59, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.20);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Learning roadmap cards */
         .roadmap-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: rgba(15, 23, 42, 0.80);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            transition: transform 0.25s ease,
+                        border-color 0.25s ease,
+                        box-shadow 0.25s ease,
+                        background 0.25s ease;
         }
 
         .roadmap-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+            transform: translateY(-4px);
+            border-color: rgba(129, 140, 248, 0.60);
+            background: rgba(20, 30, 55, 0.88);
+            box-shadow: 0 14px 35px rgba(79, 70, 229, 0.17);
+        }
+
+        .progress-track {
+            height: 10px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.16);
         }
 
         .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #6366f1, #a78bfa);
             transition: width 0.8s ease;
+        }
+
+        .universe-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #ffffff;
+            transition: transform 0.2s ease,
+                        box-shadow 0.2s ease;
+        }
+
+        .universe-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.30);
+        }
+
+        .universe-button-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            background: rgba(30, 41, 59, 0.70);
+            color: #e2e8f0;
+            transition: background 0.2s ease,
+                        border-color 0.2s ease;
+        }
+
+        .universe-button-secondary:hover {
+            border-color: rgba(129, 140, 248, 0.60);
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            border: 1px solid rgba(129, 140, 248, 0.25);
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.12);
+            color: #c4b5fd;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        /* Keep content above the interactive universe background */
+        header,
+        main,
+        footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        a:focus-visible {
+            outline: 2px solid #a5b4fc;
+            outline-offset: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+            }
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-800">
 
-    <!-- Navigation -->
-    <nav class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
+<body class="min-h-screen bg-transparent text-slate-100 antialiased">
 
-            <a href="/" class="text-2xl font-extrabold tracking-tight text-slate-900">
-                Skill<span class="text-indigo-600">Bridge</span>
-            </a>
+    <!-- ======================================== -->
+    <!-- HEADER                                   -->
+    <!-- ======================================== -->
 
-            <div class="flex items-center gap-3">
-                <a href="{{ url_for('dashboard') }}"
-                   class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-indigo-600">
-                    Dashboard
+    <header class="border-b border-white/10
+                   bg-slate-950/80 text-white
+                   shadow-lg backdrop-blur-xl">
+
+        <div class="mx-auto flex max-w-7xl flex-wrap
+                    items-center justify-between gap-4
+                    px-5 py-5 md:px-8">
+
+            <div>
+                <a href="/"
+                   class="text-2xl font-extrabold tracking-tight"
+                   aria-label="SkillBridge home">
+
+                    Skill<span class="text-indigo-400">Bridge</span>
+
                 </a>
 
-                <a href="{{ url_for('logout') }}"
-                   class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
-                    Logout
-                </a>
+                <p class="mt-1 text-sm text-slate-400">
+                    Build your skills. Shape your future.
+                </p>
             </div>
 
+            <a href="{{ url_for('dashboard') }}"
+               class="universe-button-secondary rounded-xl
+                      px-4 py-3 text-sm font-semibold">
+
+                <span aria-hidden="true">←</span>
+                Dashboard
+
+            </a>
+
         </div>
-    </nav>
+
+    </header>
+
+
+    <!-- ======================================== -->
+    <!-- MAIN CONTENT                             -->
+    <!-- ======================================== -->
 
     <main class="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:py-12">
 
-        <!-- Page heading -->
-        <section class="mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-600 p-6 text-white shadow-lg sm:p-9">
+        <!-- ==================================== -->
+        <!-- PAGE INTRODUCTION                    -->
+        <!-- ==================================== -->
+
+        <section class="relative mb-9 overflow-hidden
+                        rounded-3xl border border-indigo-300/20
+                        bg-gradient-to-br from-indigo-950/95
+                        via-indigo-900/85 to-violet-950/90
+                        p-6 shadow-2xl shadow-indigo-950/30
+                        sm:p-9 md:p-10">
+
+            <!-- Decorative universe rings -->
+            <div class="pointer-events-none absolute
+                        -right-16 -top-20 h-72 w-72
+                        rounded-full border border-indigo-300/10">
+            </div>
+
+            <div class="pointer-events-none absolute
+                        -right-6 -top-10 h-52 w-52
+                        rounded-full border border-violet-300/10">
+            </div>
+
+            <div class="pointer-events-none absolute
+                        right-16 top-16 h-3 w-3
+                        rounded-full bg-violet-300
+                        shadow-lg shadow-violet-300/50">
+            </div>
 
             <div class="relative z-10 max-w-3xl">
 
-                <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium">
-                    <span>🎯</span>
+                <span class="section-label mb-5">
+                    <span aria-hidden="true">✦</span>
                     Your personalized learning plan
-                </div>
+                </span>
 
-                <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-                    Your Learning Roadmap
+                <h1 class="text-3xl font-extrabold tracking-tight
+                           text-white sm:text-4xl lg:text-5xl">
+
+                    Your Learning
+                    <span class="text-indigo-300">Roadmap</span>
+
                 </h1>
 
-                <p class="mt-4 max-w-2xl text-sm leading-7 text-indigo-100 sm:text-base">
-                    Build your skills step by step. Follow your personalized learning
-                    recommendations and move closer to your career goals.
+                <p class="mt-5 max-w-2xl text-sm leading-7
+                          text-indigo-100/85 sm:text-base">
+
+                    Build your skills step by step. Follow your personalized
+                    learning recommendations and move closer to your career
+                    goals. Every topic you complete is another step forward.
+
                 </p>
 
-                <div class="mt-6 flex flex-wrap items-center gap-3">
+                <div class="mt-7 flex flex-wrap items-center gap-3">
 
-                    <span class="rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold">
+                    <span class="inline-flex items-center gap-2
+                                 rounded-xl border border-white/15
+                                 bg-white/10 px-4 py-3
+                                 text-sm font-semibold text-white">
+
+                        <span aria-hidden="true">🎯</span>
+
                         Career: {{ career }}
+
                     </span>
 
                     {% if assessment %}
-                    <span class="rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold">
-                        Latest Score: {{ "%.1f"|format(assessment['percentage']) }}%
+
+                    <span class="inline-flex items-center gap-2
+                                 rounded-xl border border-white/15
+                                 bg-white/10 px-4 py-3
+                                 text-sm font-semibold text-white">
+
+                        <span aria-hidden="true">📊</span>
+
+                        Latest Score:
+                        {{ "%.1f"|format(assessment['percentage']) }}%
+
                     </span>
+
                     {% endif %}
 
                 </div>
 
             </div>
+
         </section>
 
-        <!-- Summary -->
+
+        <!-- ==================================== -->
+        <!-- ASSESSMENT SUMMARY                   -->
+        <!-- ==================================== -->
+
         {% if assessment %}
 
-        <section class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <section class="mb-10">
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-medium text-slate-500">Selected Career</p>
-                <h2 class="mt-3 text-lg font-bold text-slate-900">
-                    {{ career }}
+            <div class="mb-5">
+
+                <h2 class="text-xl font-bold text-white">
+                    Your Learning Overview
                 </h2>
-                <p class="mt-2 text-sm text-slate-500">
-                    Your current career goal
+
+                <p class="mt-2 text-sm text-slate-400">
+                    A quick look at your current career and skill level.
                 </p>
+
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-medium text-slate-500">Latest Assessment</p>
-                <h2 class="mt-3 text-3xl font-extrabold text-indigo-600">
-                    {{ "%.1f"|format(assessment['percentage']) }}%
-                </h2>
-                <p class="mt-2 text-sm text-slate-500">
-                    Overall assessment score
-                </p>
-            </div>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-medium text-slate-500">Current Level</p>
-                <h2 class="mt-3 text-2xl font-extrabold text-slate-900">
-                    {{ assessment['skill_level'] }}
-                </h2>
-                <p class="mt-2 text-sm text-slate-500">
-                    Based on your latest assessment
-                </p>
+                <!-- Selected Career -->
+                <article class="universe-panel rounded-2xl p-6 shadow-lg">
+
+                    <div class="flex items-center justify-between gap-4">
+
+                        <div>
+                            <p class="text-sm font-medium text-slate-400">
+                                Selected Career
+                            </p>
+
+                            <h3 class="mt-3 text-lg font-bold text-white">
+                                {{ career }}
+                            </h3>
+                        </div>
+
+                        <div class="flex h-12 w-12 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border border-indigo-400/20
+                                    bg-indigo-500/10 text-2xl">
+
+                            🎯
+
+                        </div>
+
+                    </div>
+
+                    <p class="mt-5 text-xs text-slate-400">
+                        Your current career goal
+                    </p>
+
+                </article>
+
+
+                <!-- Latest Assessment -->
+                <article class="universe-panel rounded-2xl p-6 shadow-lg">
+
+                    <div class="flex items-center justify-between gap-4">
+
+                        <div>
+                            <p class="text-sm font-medium text-slate-400">
+                                Latest Assessment
+                            </p>
+
+                            <h3 class="mt-3 text-3xl font-extrabold text-indigo-300">
+                                {{ "%.1f"|format(assessment['percentage']) }}%
+                            </h3>
+                        </div>
+
+                        <div class="flex h-12 w-12 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border border-violet-400/20
+                                    bg-violet-500/10 text-2xl">
+
+                            📊
+
+                        </div>
+
+                    </div>
+
+                    <p class="mt-5 text-xs text-slate-400">
+                        Your overall assessment score
+                    </p>
+
+                </article>
+
+
+                <!-- Current Skill Level -->
+                <article class="universe-panel rounded-2xl p-6 shadow-lg">
+
+                    <div class="flex items-center justify-between gap-4">
+
+                        <div>
+                            <p class="text-sm font-medium text-slate-400">
+                                Current Level
+                            </p>
+
+                            <h3 class="mt-3 text-2xl font-extrabold text-white">
+                                {{ assessment['skill_level'] }}
+                            </h3>
+                        </div>
+
+                        <div class="flex h-12 w-12 shrink-0
+                                    items-center justify-center
+                                    rounded-xl border border-emerald-400/20
+                                    bg-emerald-500/10 text-2xl">
+
+                            🚀
+
+                        </div>
+
+                    </div>
+
+                    <p class="mt-5 text-xs text-slate-400">
+                        Based on your latest assessment
+                    </p>
+
+                </article>
+
             </div>
 
         </section>
 
         {% endif %}
 
-        <!-- Learning roadmap -->
+
+        <!-- ==================================== -->
+        <!-- LEARNING ROADMAP                     -->
+        <!-- ==================================== -->
+
         <section>
 
-            <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div class="mb-7 flex flex-col gap-4
+                        sm:flex-row sm:items-end sm:justify-between">
 
                 <div>
-                    <p class="text-sm font-bold uppercase tracking-widest text-indigo-600">
-                        Your next steps
+
+                    <p class="text-xs font-bold uppercase
+                              tracking-[0.18em] text-indigo-300">
+
+                        YOUR NEXT STEPS
+
                     </p>
 
-                    <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                    <h2 class="mt-3 text-2xl font-extrabold
+                               tracking-tight text-white sm:text-3xl">
+
                         Skill Development Plan
+
                     </h2>
 
-                    <p class="mt-2 text-sm leading-6 text-slate-500">
-                        Focus on your skill areas and follow the recommended topics.
+                    <p class="mt-3 max-w-2xl text-sm
+                              leading-7 text-slate-400">
+
+                        Focus on your skill areas and follow the recommended
+                        topics to strengthen your knowledge.
+
                     </p>
+
                 </div>
 
                 {% if roadmap %}
-                <span class="inline-flex w-fit items-center rounded-full bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700">
+
+                <span class="inline-flex w-fit items-center gap-2
+                             rounded-xl border border-indigo-400/25
+                             bg-indigo-500/10 px-4 py-3
+                             text-sm font-semibold text-indigo-300">
+
+                    <span aria-hidden="true">✦</span>
+
                     {{ roadmap|length }} skill areas
+
                 </span>
+
                 {% endif %}
 
             </div>
+
 
             {% if roadmap %}
 
@@ -163,15 +475,24 @@
 
                 {% for skill in roadmap %}
 
-                <article class="roadmap-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <article class="roadmap-card overflow-hidden
+                                rounded-2xl shadow-lg">
 
-                    <div class="border-b border-slate-100 p-5 sm:p-6">
+                    <!-- Skill Card Header -->
+                    <div class="border-b border-white/10 p-5 sm:p-6">
 
-                        <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start
+                                    justify-between gap-4">
 
-                            <div class="flex items-start gap-3">
+                            <div class="flex min-w-0
+                                        items-start gap-3">
 
-                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xl">
+                                <div class="flex h-12 w-12 shrink-0
+                                            items-center justify-center
+                                            rounded-xl border
+                                            border-indigo-400/20
+                                            bg-indigo-500/10 text-2xl">
+
                                     {% if skill['skill_name'] == 'Programming Basics' %}
                                         💻
                                     {% elif skill['skill_name'] == 'Web Development' %}
@@ -183,50 +504,78 @@
                                     {% else %}
                                         🧠
                                     {% endif %}
+
                                 </div>
 
-                                <div>
-                                    <h3 class="text-lg font-bold text-slate-900">
+                                <div class="min-w-0">
+
+                                    <h3 class="break-words text-lg
+                                               font-bold text-white">
+
                                         {{ skill['skill_name'] }}
+
                                     </h3>
 
-                                    <p class="mt-1 text-sm text-slate-500">
+                                    <p class="mt-2 text-sm text-slate-400">
+
                                         Personalized learning path
+
                                     </p>
+
                                 </div>
 
                             </div>
 
-                            <span class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold
+
+                            <!-- Skill Level Badge -->
+                            <span class="shrink-0 rounded-full
+                                         border px-3 py-1.5
+                                         text-xs font-bold
+
                                 {% if skill['level'] == 'Beginner' %}
-                                    bg-amber-50 text-amber-700
+                                    border-amber-400/20 bg-amber-500/10 text-amber-300
                                 {% elif skill['level'] == 'Intermediate' %}
-                                    bg-blue-50 text-blue-700
+                                    border-blue-400/20 bg-blue-500/10 text-blue-300
                                 {% else %}
-                                    bg-emerald-50 text-emerald-700
+                                    border-emerald-400/20 bg-emerald-500/10 text-emerald-300
                                 {% endif %}">
+
                                 {{ skill['level'] }}
+
                             </span>
 
                         </div>
 
-                        <div class="mt-6">
 
-                            <div class="mb-2 flex items-center justify-between">
-                                <span class="text-sm font-medium text-slate-500">
-                                    Assessment score
+                        <!-- Assessment Score -->
+                        <div class="mt-7">
+
+                            <div class="mb-3 flex items-center
+                                        justify-between gap-3">
+
+                                <span class="text-sm font-medium text-slate-400">
+
+                                    Assessment Score
+
                                 </span>
 
-                                <span class="text-sm font-bold text-slate-800">
+                                <span class="text-sm font-bold text-indigo-300">
+
                                     {{ "%.1f"|format(skill['percentage']) }}%
+
                                 </span>
+
                             </div>
 
-                            <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                            <div class="progress-track"
+                                 role="progressbar"
+                                 aria-label="{{ skill['skill_name'] }} assessment score"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-valuenow="{{ skill['percentage'] }}">
 
-                                <div class="progress-fill h-full rounded-full bg-indigo-600"
-                                     data-percentage="{{ skill['percentage'] }}"
-                                     style="width: 0%">
+                                <div class="progress-fill"
+                                     data-percentage="{{ skill['percentage'] }}">
                                 </div>
 
                             </div>
@@ -235,25 +584,50 @@
 
                     </div>
 
+
+                    <!-- Recommended Topics -->
                     <div class="p-5 sm:p-6">
 
-                        <h4 class="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900">
-                            <span>📚</span>
-                            Recommended learning topics
+                        <h4 class="mb-5 flex items-center
+                                   gap-2 text-sm font-bold text-white">
+
+                            <span class="flex h-9 w-9
+                                         items-center justify-center
+                                         rounded-lg border
+                                         border-violet-400/20
+                                         bg-violet-500/10 text-lg">
+
+                                📚
+
+                            </span>
+
+                            Recommended Learning Topics
+
                         </h4>
 
-                        <ol class="space-y-3">
+
+                        <ol class="space-y-4">
 
                             {% for topic in skill['topics'] %}
 
                             <li class="flex items-start gap-3">
 
-                                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-700">
+                                <span class="flex h-8 w-8 shrink-0
+                                             items-center justify-center
+                                             rounded-lg border
+                                             border-indigo-400/20
+                                             bg-indigo-500/10
+                                             text-xs font-bold text-indigo-300">
+
                                     {{ loop.index }}
+
                                 </span>
 
-                                <span class="pt-1 text-sm leading-6 text-slate-600">
+                                <span class="pt-1 text-sm
+                                             leading-6 text-slate-300">
+
                                     {{ topic }}
+
                                 </span>
 
                             </li>
@@ -270,28 +644,50 @@
 
             </div>
 
+
             {% else %}
 
-            <!-- Empty state -->
-            <div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center sm:px-10">
+            <!-- ================================= -->
+            <!-- EMPTY ROADMAP STATE               -->
+            <!-- ================================= -->
 
-                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-3xl">
+            <div class="universe-panel rounded-3xl
+                        border-dashed px-6 py-12
+                        text-center sm:px-10">
+
+                <div class="mx-auto flex h-16 w-16
+                            items-center justify-center
+                            rounded-2xl border
+                            border-indigo-400/20
+                            bg-indigo-500/10 text-3xl">
+
                     📘
+
                 </div>
 
-                <h3 class="mt-5 text-xl font-bold text-slate-900">
-                    Your roadmap is waiting!
+                <h3 class="mt-6 text-xl font-bold text-white">
+
+                    Your Roadmap Is Waiting!
+
                 </h3>
 
-                <p class="mx-auto mt-3 max-w-lg text-sm leading-7 text-slate-500">
-                    Complete your first skill assessment to receive personalized
-                    learning recommendations based on your results.
+                <p class="mx-auto mt-3 max-w-lg
+                          text-sm leading-7 text-slate-400">
+
+                    Complete your first skill assessment to receive
+                    personalized learning recommendations based on
+                    your results.
+
                 </p>
 
                 <a href="{{ url_for('skill_assessment') }}"
-                   class="mt-6 inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">
+                   class="universe-button mt-7 rounded-xl
+                          px-6 py-3.5 text-sm font-semibold shadow-lg">
+
                     Start Skill Assessment
-                    <span class="ml-2">→</span>
+
+                    <span aria-hidden="true">→</span>
+
                 </a>
 
             </div>
@@ -300,29 +696,67 @@
 
         </section>
 
-        <!-- Bottom action -->
-        <section class="mt-10 flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
 
-            <div>
-                <h3 class="font-bold text-slate-900">
-                    Keep building your skills
-                </h3>
+        <!-- ==================================== -->
+        <!-- BOTTOM ACTION PANEL                  -->
+        <!-- ==================================== -->
 
-                <p class="mt-1 text-sm leading-6 text-slate-600">
-                    Reassess your skills as you learn to track your improvement.
-                </p>
+        <section class="universe-panel mt-10 flex flex-col
+                        gap-5 rounded-2xl p-5 shadow-lg
+                        sm:flex-row sm:items-center
+                        sm:justify-between sm:p-6">
+
+            <div class="flex items-start gap-4">
+
+                <div class="flex h-12 w-12 shrink-0
+                            items-center justify-center
+                            rounded-xl border border-emerald-400/20
+                            bg-emerald-500/10 text-2xl">
+
+                    🚀
+
+                </div>
+
+                <div>
+
+                    <h3 class="font-bold text-white">
+
+                        Keep Building Your Skills
+
+                    </h3>
+
+                    <p class="mt-2 max-w-xl text-sm
+                              leading-6 text-slate-400">
+
+                        Reassess your skills as you learn to track your
+                        improvement and identify your next steps.
+
+                    </p>
+
+                </div>
+
             </div>
+
 
             <div class="flex flex-wrap gap-3">
 
                 <a href="{{ url_for('assessment_history') }}"
-                   class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700">
+                   class="universe-button-secondary
+                          rounded-xl px-4 py-3
+                          text-sm font-semibold">
+
                     Assessment History
+
                 </a>
 
                 <a href="{{ url_for('skill_assessment') }}"
-                   class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                   class="universe-button rounded-xl
+                          px-4 py-3 text-sm font-semibold">
+
                     Retake Assessment
+
+                    <span aria-hidden="true">→</span>
+
                 </a>
 
             </div>
@@ -331,16 +765,34 @@
 
     </main>
 
-    <!-- Minimal footer -->
-    <footer class="mt-12 border-t border-slate-200 bg-white">
 
-        <div class="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+    <!-- ======================================== -->
+    <!-- FOOTER                                   -->
+    <!-- ======================================== -->
 
-            <a href="/" class="text-lg font-extrabold tracking-tight text-slate-900">
-                Skill<span class="text-indigo-600">Bridge</span>
-            </a>
+    <footer class="mt-12 border-t border-white/10
+                   bg-slate-950/75 backdrop-blur-xl">
 
-            <p class="text-sm text-slate-400">
+        <div class="mx-auto flex max-w-7xl flex-col
+                    gap-3 px-5 py-6 sm:flex-row
+                    sm:items-center sm:justify-between sm:px-8">
+
+            <div>
+
+                <a href="/"
+                   class="text-lg font-extrabold tracking-tight text-white">
+
+                    Skill<span class="text-indigo-400">Bridge</span>
+
+                </a>
+
+                <p class="mt-1 text-sm text-slate-400">
+                    Learn Today, Grow Tomorrow.
+                </p>
+
+            </div>
+
+            <p class="text-sm text-slate-500">
                 © 2026 SkillBridge. All rights reserved.
             </p>
 
@@ -348,16 +800,32 @@
 
     </footer>
 
+
+    <!-- ======================================== -->
+    <!-- PROGRESS BAR ANIMATION                   -->
+    <!-- ======================================== -->
+
     <script>
         document.querySelectorAll(".progress-fill").forEach(function (bar) {
             const percentage = Number(bar.dataset.percentage);
-            const safePercentage = Math.min(100, Math.max(0, percentage || 0));
+            const safePercentage = Math.min(
+                100,
+                Math.max(0, Number.isFinite(percentage) ? percentage : 0)
+            );
 
             requestAnimationFrame(function () {
                 bar.style.width = safePercentage + "%";
             });
         });
     </script>
+
+
+    <!-- ======================================== -->
+    <!-- INTERACTIVE UNIVERSE BACKGROUND          -->
+    <!-- ======================================== -->
+
+    <script src="{{ url_for('static', filename='js/interactive.js') }}"
+            defer></script>
 
 </body>
 </html>
