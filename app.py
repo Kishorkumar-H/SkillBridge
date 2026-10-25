@@ -231,6 +231,9 @@ def init_db():
     finally:
         connection.close()
 
+# Initialize database tables when the application loads.
+init_db()
+
 
 # STEP 3: Homepage
 @app.route("/")
