@@ -4,6 +4,7 @@ from psycopg import connection
 from psycopg.rows import dict_row
 from psycopg import IntegrityError as PostgreSQLIntegrityError
 from pathlib import Path
+from assessment_questions import get_random_questions, QUESTION_BANKS
 
 from flask import (
     Flask,
@@ -22,6 +23,7 @@ from werkzeug.security import check_password_hash
 
 import re
 import os
+import random
 
 app = Flask(__name__)
 
@@ -1036,6 +1038,8 @@ def skill_assessment():
     finally:
         connection.close()
 
+    
+
     if not user or not user["selected_career"]:
         flash(
             "Please select your career before starting the assessment.",
@@ -1045,123 +1049,52 @@ def skill_assessment():
 
     career = user["selected_career"]
 
-    questions = [
-    {
-        "id": 1,
-        "skill": "Programming Basics",
-        "question": "What is a variable used for?",
-        "options": [
-            "To store data",
-            "To delete a program",
-            "To turn off a computer",
-            "To create hardware"
-        ]
-    },
-    {
-        "id": 2,
-        "skill": "Programming Basics",
-        "question": "What is an algorithm?",
-        "options": [
-            "A computer monitor",
-            "A step-by-step solution to a problem",
-            "A programming language only",
-            "A storage device"
-        ]
-    },
-    {
-        "id": 3,
-        "skill": "Web Development",
-        "question": "What does HTML primarily define?",
-        "options": [
-            "Database security",
-            "Webpage structure",
-            "Computer hardware",
-            "Network cables"
-        ]
-    },
-    {
-        "id": 4,
-        "skill": "Web Development",
-        "question": "What is CSS mainly used for?",
-        "options": [
-            "Styling webpages",
-            "Storing passwords",
-            "Managing computer memory",
-            "Creating network connections"
-        ]
-    },
-    {
-        "id": 5,
-        "skill": "Programming Basics",
-        "question": "What is a loop used for?",
-        "options": [
-            "Repeating instructions",
-            "Deleting files automatically",
-            "Increasing screen brightness",
-            "Installing hardware"
-        ]
-    },
-    {
-        "id": 6,
-        "skill": "Databases",
-        "question": "What is a database used for?",
-        "options": [
-            "Playing music only",
-            "Organizing and storing data",
-            "Drawing pictures only",
-            "Cooling a computer"
-        ]
-    },
-    {
-        "id": 7,
-        "skill": "Networking",
-        "question": "What does an IP address help identify?",
-        "options": [
-            "A device on a network",
-            "A keyboard key",
-            "A file extension",
-            "A programming variable"
-        ]
-    },
-    {
-        "id": 8,
-        "skill": "Programming Basics",
-        "question": "What is a function?",
-        "options": [
-            "A reusable block of code",
-            "A computer screen",
-            "A network cable",
-            "A type of keyboard"
-        ]
-    },
-    {
-        "id": 9,
-        "skill": "Problem Solving",
-        "question": "What should you do first when debugging a program?",
-        "options": [
-            "Ignore the error",
-            "Identify and understand the error",
-            "Delete the entire project",
-            "Turn off the computer"
-        ]
-    },
-    {
-        "id": 10,
-        "skill": "Programming Basics",
-        "question": "What is the purpose of testing software?",
-        "options": [
-            "To find defects and verify behavior",
-            "To make the computer heavier",
-            "To remove all documentation",
-            "To change the keyboard"
+    # Confirm that a question bank exists for the selected career.
+    if career not in QUESTION_BANKS:
+        flash(
+            "Questions are not available for this career yet.",
+            "error"
+        )
+        return redirect(url_for("career_selection"))
+
+    # Select 10 random questions from the selected career.
+    selected_questions = get_random_questions(career, count=10)
+
+    if len(selected_questions) != 10:
+        flash(
+            "Unable to prepare the assessment. Please try again.",
+            "error"
+        )
+        return redirect(url_for("career_selection"))
+
+    # Keep only question IDs and shuffled options in the session.
+    # Correct answers remain in the server-side question bank.
+    session["active_assessment"] = {
+        "career": career,
+        "questions": [
+            {
+                "id": question["id"],
+                "options": question["options"]
+            }
+            for question in selected_questions
         ]
     }
- ]
+
+    # Do not send correct answers to the template.
+    template_questions = [
+        {
+            "id": question["id"],
+            "skill": question["skill"],
+            "question": question["question"],
+            "options": question["options"]
+        }
+        for question in selected_questions
+    ]
 
     return render_template(
         "skill_assessment.html",
         career=career,
-        questions=questions
+        questions=template_questions
     )
 
 # Submit, evaluate, and save the assessment
@@ -1169,182 +1102,96 @@ def skill_assessment():
 @app.route("/submit-assessment", methods=["POST"])
 @login_required
 def submit_assessment():
-    correct_answers = {
-        1: 0,
-        2: 1,
-        3: 1,
-        4: 0,
-        5: 0,
-        6: 1,
-        7: 0,
-        8: 0,
-        9: 1,
-        10: 0
+    import logging
+    from collections import defaultdict
+
+    # Get the assessment currently stored in the session.
+    active_assessment = session.get("active_assessment")
+
+    if not active_assessment:
+        flash("Your assessment session expired. Please try again.", "error")
+        return redirect(url_for("skill_assessment"))
+
+    career = active_assessment.get("career")
+    active_questions = active_assessment.get("questions", [])
+
+    # Confirm that the career has a question bank.
+    if career not in QUESTION_BANKS:
+        session.pop("active_assessment", None)
+        flash("Invalid assessment. Please start again.", "error")
+        return redirect(url_for("skill_assessment"))
+
+    # Build a lookup of the original questions and correct answers.
+    question_bank = {
+        question["id"]: question
+        for question in QUESTION_BANKS[career]
     }
 
-    total_questions = len(correct_answers)
+    # Validate the active question list.
+    if len(active_questions) != 10:
+        session.pop("active_assessment", None)
+        flash("Invalid assessment questions. Please start again.", "error")
+        return redirect(url_for("skill_assessment"))
+
+    question_ids = [question.get("id") for question in active_questions]
+
+    if len(set(question_ids)) != 10:
+        session.pop("active_assessment", None)
+        flash("Invalid assessment questions. Please start again.", "error")
+        return redirect(url_for("skill_assessment"))
+
+    # Store results grouped by skill.
+    skill_totals = defaultdict(int)
+    skill_correct = defaultdict(int)
     score = 0
 
+    for active_question in active_questions:
+        question_id = active_question.get("id")
+        original_question = question_bank.get(question_id)
 
-    # Define skill categories and their question IDs
-    skill_categories = {
-        "Programming Basics": [1, 2, 5, 8, 10],
-        "Web Development": [3, 4],
-        "Databases": [6],
-        "Networking": [7],
-        "Problem Solving": [9]
-    }
+        if not original_question:
+            session.pop("active_assessment", None)
+            flash("Invalid assessment question. Please start again.", "error")
+            return redirect(url_for("skill_assessment"))
 
+        shuffled_options = active_question.get("options", [])
+        original_options = original_question.get("options", [])
 
-# Calculate the score
-    for question_id, correct_option in correct_answers.items():
-        submitted_answer = request.form.get(
-            f"question_{question_id}"
-        )
+        # Ensure that the submitted assessment uses the original options.
+        if (
+            len(shuffled_options) != len(original_options)
+            or sorted(shuffled_options) != sorted(original_options)
+        ):
+            session.pop("active_assessment", None)
+            flash("Invalid assessment options. Please start again.", "error")
+            return redirect(url_for("skill_assessment"))
 
-        if submitted_answer == str(correct_option):
+        # Require an answer for every question.
+        submitted_value = request.form.get(f"question_{question_id}")
+
+        try:
+            selected_index = int(submitted_value)
+        except (TypeError, ValueError):
+            flash("Please answer all questions before submitting.", "error")
+            return redirect(url_for("skill_assessment"))
+
+        if not 0 <= selected_index < len(shuffled_options):
+            flash("Invalid answer selected. Please try again.", "error")
+            return redirect(url_for("skill_assessment"))
+
+        selected_answer = shuffled_options[selected_index]
+        is_correct = selected_answer == original_question["correct"]
+
+        skill = original_question["skill"]
+        skill_totals[skill] += 1
+
+        if is_correct:
             score += 1
+            skill_correct[skill] += 1
 
-    
-# Calculate individual skill scores
-    skill_results = []
+    total_questions = len(active_questions)
+    percentage = round((score / total_questions) * 100, 1)
 
-    for skill_name, question_ids in skill_categories.items():
-        skill_total = len(question_ids)
-        skill_score = 0
-
-        for question_id in question_ids:
-            submitted_answer = request.form.get(
-                f"question_{question_id}"
-            )
-
-            if submitted_answer == str(correct_answers[question_id]):
-                skill_score += 1
-
-        skill_percentage = (skill_score / skill_total) * 100
-
-        skill_results.append({
-            "skill_name": skill_name,
-            "total_questions": skill_total,
-            "correct_answers": skill_score,
-            "percentage": skill_percentage
-        })
-
-    # Generate personalized learning recommendations
-    recommendations = []
-
-    learning_topics = {
-        "Programming Basics": {
-            "beginner": [
-                "Learn Python variables and data types",
-                "Practise conditional statements and loops",
-                "Understand functions and basic programming"
-            ],
-            "intermediate": [
-                "Practise lists, dictionaries, and functions",
-                "Learn object-oriented programming",
-                "Build small Python projects"
-            ],
-            "advanced": [
-                "Explore advanced Python concepts",
-                "Practise algorithms and data structures",
-                "Build a complete programming project"
-            ]
-        },
-        "Web Development": {
-            "beginner": [
-                "Learn HTML structure and common tags",
-                "Understand CSS styling and layouts",
-                "Practise creating a simple webpage"
-            ],
-            "intermediate": [
-                "Practise responsive web design",
-                "Learn JavaScript DOM manipulation",
-                "Build interactive web applications"
-            ],
-            "advanced": [
-                "Explore advanced JavaScript",
-                "Learn frontend frameworks",
-                "Build a complete full-stack project"
-            ]
-        },
-        "Databases": {
-            "beginner": [
-                "Learn database tables and records",
-                "Practise basic SQL SELECT queries",
-                "Understand primary keys and foreign keys"
-            ],
-            "intermediate": [
-                "Practise SQL joins and subqueries",
-                "Learn database relationships",
-                "Practise INSERT, UPDATE, and DELETE"
-            ],
-            "advanced": [
-                "Explore database indexing",
-                "Learn query optimization",
-                "Design a database for a real project"
-            ]
-        },
-        "Networking": {
-            "beginner": [
-                "Learn the OSI and TCP/IP models",
-                "Understand IP addresses",
-                "Study basic networking devices"
-            ],
-            "intermediate": [
-                "Practise subnetting",
-                "Learn DNS, DHCP, and routing",
-                "Explore TCP and UDP"
-            ],
-            "advanced": [
-                "Study network security fundamentals",
-                "Practise network troubleshooting",
-                "Explore advanced routing concepts"
-            ]
-        },
-        "Problem Solving": {
-            "beginner": [
-                "Practise simple logical reasoning questions",
-                "Learn algorithms and flowcharts",
-                "Solve beginner programming problems"
-            ],
-            "intermediate": [
-                "Practise arrays and searching algorithms",
-                "Solve coding challenges regularly",
-                "Learn debugging techniques"
-            ],
-            "advanced": [
-                "Practise advanced algorithms",
-                "Solve data structure problems",
-                "Work on competitive programming challenges"
-            ]
-        }
-    }
-
-    for skill in skill_results:
-        skill_name = skill["skill_name"]
-        skill_percentage = skill["percentage"]
-
-        if skill_percentage < 40:
-            level = "beginner"
-        elif skill_percentage < 80:
-            level = "intermediate"
-        else:
-            level = "advanced"
-
-        topics = learning_topics.get(skill_name, {}).get(level, [])
-
-        recommendations.append({
-            "skill_name": skill_name,
-            "percentage": skill_percentage,
-            "level": level.title(),
-            "topics": topics
-        })
-
-# Calculate percentage
-    percentage = (score / total_questions) * 100
-
-# Determine skill level
     if percentage < 40:
         skill_level = "Beginner"
     elif percentage < 80:
@@ -1352,7 +1199,75 @@ def submit_assessment():
     else:
         skill_level = "Advanced"
 
-# Get the user's selected career
+    # Keep these skill names consistent with the existing learning roadmap.
+    learning_topics = {
+        "Programming Basics": [
+            "Variables and Data Types",
+            "Conditional Statements",
+            "Loops and Functions",
+            "Object-Oriented Programming"
+        ],
+        "Web Development": [
+            "HTML and CSS",
+            "JavaScript Fundamentals",
+            "Responsive Web Design",
+            "Flask and Web Applications"
+        ],
+        "Databases": [
+            "SQL Fundamentals",
+            "Database Design",
+            "Joins and Relationships",
+            "Database Optimization"
+        ],
+        "Networking": [
+            "Networking Fundamentals",
+            "TCP/IP and DNS",
+            "HTTP and HTTPS",
+            "Network Security"
+        ],
+        "Problem Solving": [
+            "Logical Thinking",
+            "Algorithms",
+            "Data Structures",
+            "Debugging Techniques"
+        ]
+    }
+
+    recommendations = []
+
+    for skill, total in skill_totals.items():
+        skill_percentage = round(
+            (skill_correct[skill] / total) * 100,
+            1
+        )
+
+    # Select a learning path based on the skill score.
+        if skill_percentage < 40:
+            recommendation_level = "Beginner"
+
+        elif skill_percentage < 80:
+            recommendation_level = "Intermediate"
+
+        else:
+            recommendation_level = "Advanced"
+
+    # Provide recommendations for every tested skill.
+        recommendations.append({
+            "skill_name": skill,
+            "percentage": skill_percentage,
+            "level": recommendation_level,
+            "topics": learning_topics.get(
+                skill, 
+                ["Practise this skill and build a project."]
+                )
+        })
+
+    print("SKILLS FOUND:", list(skill_totals.keys()))
+    print("SKILL TOTALS:", dict(skill_totals))
+    print("RECOMMENDATIONS COUNT:", len(recommendations))
+    print("RECOMMENDATIONS:", recommendations)
+
+    # Save the assessment using the existing database structure.
     connection = get_db_connection()
 
     try:
@@ -1366,68 +1281,46 @@ def submit_assessment():
             (session["user_id"],)
         ).fetchone()
 
-        if not user or not user["selected_career"]:
-            flash(
-                "Please select your career before taking the assessment.",
-                "error"
-            )
-            return redirect(url_for("career_selection"))
+        if not user or user["selected_career"] != career:
+                session.pop("active_assessment", None)
+                flash(
+                    "Your selected career has changed. Please start a new assessment.",
+                    "error"
+                )
+                return redirect(url_for("career_selection"))
 
-        career = user["selected_career"]
-
-        # Save the overall assessment result
-        if os.environ.get("DATABASE_URL"):
-            cursor = execute_query(
-                connection,
-                """
-                INSERT INTO assessments (
-                    user_id,
-                    career,
-                    total_questions,
-                    correct_answers,
-                    percentage,
-                    skill_level
-                )
-                VALUES (?, ?, ?, ?, ?, ?)
-                RETURNING id
-                """,
-                (
-                    session["user_id"],
-                    career,
-                    total_questions,
-                    score,
-                    percentage,
-                    skill_level
-                )
+        cursor = execute_query(
+            connection,
+            """
+            INSERT INTO assessments (
+                user_id,
+                career,
+                total_questions,
+                correct_answers,
+                percentage,
+                skill_level
             )
-            assessment_id = cursor.fetchone()["id"]
-        else:
-            cursor = execute_query(
-                connection,
-                """
-                INSERT INTO assessments (
-                    user_id,
-                    career,
-                    total_questions,
-                    correct_answers,
-                    percentage,
-                    skill_level
-                )
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    session["user_id"],
-                    career,
-                    total_questions,
-                    score,
-                    percentage,
-                    skill_level
-                )
+            VALUES (?, ?, ?, ?, ?, ?)
+            RETURNING id
+            """,
+            (
+                session["user_id"],
+                career,
+                total_questions,
+                score,
+                percentage,
+                skill_level
             )
-            assessment_id = cursor.lastrowid
+        )
 
-        # Save each skill's result
-        for skill in skill_results:
+        assessment_row = cursor.fetchone()
+        assessment_id = assessment_row["id"]
+
+        # Save results for the skills tested in this attempt.
+        for skill, total in skill_totals.items():
+            correct = skill_correct[skill]
+            skill_percentage = round((correct / total) * 100, 1)
+
             execute_query(
                 connection,
                 """
@@ -1442,23 +1335,20 @@ def submit_assessment():
                 """,
                 (
                     assessment_id,
-                    skill["skill_name"],
-                    skill["total_questions"],
-                    skill["correct_answers"],
-                    skill["percentage"]
+                    skill,
+                    total,
+                    correct,
+                    skill_percentage
                 )
             )
 
         connection.commit()
 
-        connection.commit()
-
-    except (sqlite3.Error, psycopg.Error):
+    except Exception:
         connection.rollback()
-        app.logger.exception("Failed to save assessment result")
-
+        logging.exception("Failed to submit SkillBridge assessment.")
         flash(
-            "Unable to save your assessment result. Please try again.",
+            "Something went wrong while saving your assessment. Please try again.",
             "error"
         )
         return redirect(url_for("skill_assessment"))
@@ -1466,17 +1356,32 @@ def submit_assessment():
     finally:
         connection.close()
 
+    # Prepare skill-wise results for the result page.
+    skill_results = []
 
-# Display the result and skill-wise analysis
+    for skill, total in skill_totals.items():
+        correct = skill_correct[skill]
+        skill_percentage = round((correct / total) * 100, 1)
+
+        skill_results.append({
+            "skill_name": skill,
+            "correct_answers": correct,
+            "total_questions": total,
+            "percentage": skill_percentage
+        })
+
     return render_template(
         "assessment_result.html",
         score=score,
         total_questions=total_questions,
         percentage=percentage,
         skill_level=skill_level,
+        career=career,
+        skill_totals=dict(skill_totals),
+        skill_correct=dict(skill_correct),
         skill_results=skill_results,
         recommendations=recommendations
-    )
+    )    
 
 
 # Start the application
