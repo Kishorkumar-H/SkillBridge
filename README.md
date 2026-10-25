@@ -43,7 +43,8 @@ identify areas for improvement.
 - Flask
 
 ### Database
-- SQLite
+- PostgreSQL (Neon)
+
 
 ## 📁 Project Structure
 
